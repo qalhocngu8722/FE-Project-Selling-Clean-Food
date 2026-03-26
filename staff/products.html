@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý sản phẩm - FreshQAL Staff</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../fontawesome-free-6.6.0-web/css/all.css">
+
+</head>
+<body>
+    <div class="admin-layout" id="app">
+        <div id="sidebarContainer"></div>
+        <div class="main-content">
+            <div class="topbar">
+                <h2><i class="fa-solid fa-box"></i> Quản lý sản phẩm</h2>
+                <div class="topbar-actions">
+                    <button class="btn btn-primary btn-sm" onclick="openAddProduct()"><i class="fa-solid fa-plus"></i> Thêm sản phẩm</button>
+                </div>
+            </div>
+
+            <div class="data-card">
+                <div class="data-card-header">
+                    <h3>Danh sách sản phẩm</h3>
+                    <div class="data-card-tools">
+                        <input type="text" class="search-input" id="searchInput" placeholder=" Tìm kiếm sản phẩm..." oninput="renderProducts()">
+                    </div>
+                </div>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Emoji</th>
+                            <th>Tên sản phẩm</th>
+                            <th>Danh mục</th>
+                            <th>Đơn vị tính</th>
+                            <th>Xuất xứ</th>
+                            <th>Loại</th>
+                            <th>Giá</th>
+                            <th>Hạn sử dụng</th>
+                            <th>Số lượng</th>
+                            <th>Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody id="productTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="productModal">
+        <div class="modal" style="max-width:640px;">
+            <div class="modal-header">
+                <h3 id="modalTitle">Thêm sản phẩm</h3>
+                <button class="modal-close" onclick="closeModal('productModal')">✕</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="editId">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Tên sản phẩm</label>
+                        <input type="text" class="form-control" id="fName" placeholder="Nhập tên sản phẩm">
+                    </div>
+                    <div class="form-group">
+                        <label>Danh mục</label>
+                        <select class="form-control" id="fCategory"></select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Mô tả</label>
+                    <textarea class="form-control" id="fDesc" rows="3" placeholder="Mô tả sản phẩm"></textarea>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Giá (VNĐ)</label>
+                        <input type="number" class="form-control" id="fPrice" placeholder="0">
+                    </div>
+                    <div class="form-group">
+                        <label>Đơn vị</label>
+                        <input type="text" class="form-control" id="fUnit" placeholder="kg, bó, cây...">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Xuất xứ</label>
+                        <input type="text" class="form-control" id="fOrigin" placeholder="Đà Lạt, Hà Nội...">
+                    </div>
+                    <div class="form-group">
+                        <label>Loại thực phẩm</label>
+                        <select class="form-control" id="fFoodType">
+                            <option value="Sạch">Sạch</option>
+                            <option value="Hữu cơ">Hữu cơ</option>
+                            <option value="Nhập khẩu">Nhập khẩu</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Số lượng tồn kho</label>
+                        <input type="number" class="form-control" id="fQuantity" placeholder="0">
+                    </div>
+                    <div class="form-group">
+                        <label>Quy cách</label>
+                        <input type="text" class="form-control" id="fSize" placeholder="1kg, 500g...">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Hướng dẫn sử dụng</label>
+                    <input type="text" class="form-control" id="fUsage" placeholder="Cách chế biến...">
+                </div>
+                <div class="form-group">
+                    <label>Hướng dẫn bảo quản</label>
+                    <input type="text" class="form-control" id="fStorage" placeholder="Cách bảo quản...">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Emoji</label>
+                        <select class="form-control" id="fEmoji">
+                            <option value="🥬">🥬 Rau xanh</option>
+                            <option value="🥕">🥕 Cà rốt</option>
+                            <option value="🥔">🥔 Khoai tây</option>
+                            <option value="🍠">🍠 Khoai lang</option>
+                            <option value="🥗">🥗 Salad</option>
+                            <option value="🍎">🍎 Táo</option>
+                            <option value="🍊">🍊 Cam</option>
+                            <option value="🍌">🍌 Chuối</option>
+                            <option value="🍉">🍉 Dưa hấu</option>
+                            <option value="🍇">🍇 Nho</option>
+                            <option value="🍄">🍄 Nấm</option>
+                            <option value="🌿">🌿 Rau thơm</option>
+                            <option value="🧅">🧅 Hành</option>
+                            <option value="🌶️">🌶️ Ớt</option>
+                            <option value="🫚">🫚 Gừng</option>
+                            <option value="🎃">🎃 Bí đỏ</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Badge</label>
+                        <select class="form-control" id="fBadge">
+                            <option value="">Không có</option>
+                            <option value="new">Mới</option>
+                            <option value="hot">Hot</option>
+                            <option value="sale">Sale</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-ghost" onclick="closeModal('productModal')">Hủy</button>
+                <button class="btn btn-primary" onclick="saveProduct()">Lưu sản phẩm</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="../js/data.js"></script>
+    <script src="../js/components.js"></script>
+    <script src="../js/app.js"></script>
+    <script>
+    (async function initPage() {
+        const user = requireRole(['staff', 'admin']);
+        if (!user) return;
+        await preloadData();
+        document.getElementById('sidebarContainer').innerHTML = renderSidebar('staff', 'products');
+        loadCategoryOptions();
+        renderProducts();
+    })();
+
+    function loadCategoryOptions() {
+        const cats = getCategories();
+        document.getElementById('fCategory').innerHTML = cats.map(c =>
+            `<option value="${c.id}">${c.icon} ${c.name}</option>`
+        ).join('');
+    }
+
+    function renderProducts() {
+        const keyword = document.getElementById('searchInput').value.toLowerCase();
+        let products = getProducts();
+        if (keyword) {
+            products = products.filter(p =>
+                p.name.toLowerCase().includes(keyword) ||
+                p.origin.toLowerCase().includes(keyword) ||
+                p.description.toLowerCase().includes(keyword)
+            );
+        }
+        const categories = getCategories();
+        document.getElementById('productTableBody').innerHTML = products.length
+            ? products.map(p => {
+                const cat = categories.find(c => c.id === p.category_id);
+                return `<tr>
+                    <td><strong>${p.id}</strong></td>
+                    <td style="font-size:1.5rem;">${p.emoji || '🥬'}</td>
+                    <td><strong>${p.name}</strong></td>
+                    <td>${cat ? cat.name : ''}</td>
+                    <td class="text-accent fw-bold">${formatPrice(p.price)}</td>
+                    <td>${p.quantity}</td>
+                    <td>${p.origin}</td>
+                    <td>
+                        <div class="table-actions">
+                            <button class="btn-edit" onclick="editProduct(${p.id})" title="Sửa">✏️</button>
+                            <button class="btn-delete" onclick="deleteProduct(${p.id})" title="Xóa">🗑️</button>
+                        </div>
+                    </td>
+                </tr>`;
+            }).join('')
+            : '<tr><td colspan="8" class="text-center text-muted" style="padding:40px">Không tìm thấy sản phẩm</td></tr>';
+    }
+
+    function openAddProduct() {
+        document.getElementById('modalTitle').textContent = 'Thêm sản phẩm mới';
+        document.getElementById('editId').value = '';
+        clearForm();
+        openModal('productModal');
+    }
+
+    function editProduct(id) {
+        const p = getProductById(id);
+        if (!p) return;
+        document.getElementById('modalTitle').textContent = 'Sửa sản phẩm';
+        document.getElementById('editId').value = p.id;
+        document.getElementById('fName').value = p.name;
+        document.getElementById('fDesc').value = p.description;
+        document.getElementById('fPrice').value = p.price;
+        document.getElementById('fUnit').value = p.unit;
+        document.getElementById('fCategory').value = p.category_id;
+        document.getElementById('fOrigin').value = p.origin;
+        document.getElementById('fFoodType').value = p.food_type;
+        document.getElementById('fQuantity').value = p.quantity;
+        document.getElementById('fSize').value = p.size;
+        document.getElementById('fUsage').value = p.usage_instructions;
+        document.getElementById('fStorage').value = p.storage_instructions;
+        document.getElementById('fEmoji').value = p.emoji;
+        document.getElementById('fBadge').value = p.badge || '';
+        openModal('productModal');
+    }
+
+    function saveProduct() {
+        const name = document.getElementById('fName').value.trim();
+        const price = parseInt(document.getElementById('fPrice').value);
+        const quantity = parseInt(document.getElementById('fQuantity').value);
+
+        if (!name) { showToast('Vui lòng nhập tên sản phẩm!', 'error'); return; }
+        if (!price || price <= 0) { showToast('Vui lòng nhập giá hợp lệ!', 'error'); return; }
+        if (isNaN(quantity) || quantity < 0) { showToast('Số lượng không hợp lệ!', 'error'); return; }
+
+        const products = getProducts();
+        const editId = document.getElementById('editId').value;
+
+        const productData = {
+            name: name,
+            description: document.getElementById('fDesc').value.trim(),
+            price: price,
+            unit: document.getElementById('fUnit').value.trim() || 'kg',
+            category_id: parseInt(document.getElementById('fCategory').value),
+            origin: document.getElementById('fOrigin').value.trim(),
+            food_type: document.getElementById('fFoodType').value,
+            quantity: quantity,
+            size: document.getElementById('fSize').value.trim(),
+            usage_instructions: document.getElementById('fUsage').value.trim(),
+            storage_instructions: document.getElementById('fStorage').value.trim(),
+            emoji: document.getElementById('fEmoji').value,
+            badge: document.getElementById('fBadge').value
+        };
+
+        if (editId) {
+            const idx = products.findIndex(p => p.id === parseInt(editId));
+            if (idx !== -1) {
+                products[idx] = { ...products[idx], ...productData };
+                setProducts(products);
+                showToast('Cập nhật sản phẩm thành công!');
+            }
+        } else {
+            const maxId = products.length ? Math.max(...products.map(p => p.id)) : 0;
+            const hsd = new Date();
+            hsd.setDate(hsd.getDate() + 14);
+            productData.id = maxId + 1;
+            productData.hsd = hsd.toISOString().split('T')[0];
+            products.push(productData);
+            setProducts(products);
+            showToast('Thêm sản phẩm mới thành công!');
+        }
+
+        closeModal('productModal');
+        renderProducts();
+    }
+
+    function deleteProduct(id) {
+        const p = getProductById(id);
+        if (!p) return;
+        if (!confirm(`Bạn có chắc muốn xóa sản phẩm "${p.name}"?`)) return;
+        const products = getProducts().filter(prod => prod.id !== id);
+        setProducts(products);
+        showToast('Đã xóa sản phẩm!', 'info');
+        renderProducts();
+    }
+
+    function clearForm() {
+        ['fName', 'fDesc', 'fPrice', 'fUnit', 'fOrigin', 'fQuantity', 'fSize', 'fUsage', 'fStorage'].forEach(id => {
+            document.getElementById(id).value = '';
+        });
+        document.getElementById('fFoodType').value = 'Sạch';
+        document.getElementById('fEmoji').value = '<i class="fa-solid fa-seedling"></i>';
+        document.getElementById('fBadge').value = '';
+    }
+    </script>
+</body>
+</html>

@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đơn hàng của tôi - FreshQAL</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../fontawesome-free-6.6.0-web/css/all.css">
+</head>
+<body>
+    <div id="header-placeholder"></div>
+
+    <div class="orders-page animate-fadeIn">
+        <h1 class="page-title">
+            <span class="title-icon">📦</span>
+            Đơn hàng của tôi
+        </h1>
+
+        <div class="order-tabs" id="order-tabs">
+            <button class="order-tab active" onclick="filterOrders('all', this)">Tất cả</button>
+            <button class="order-tab" onclick="filterOrders('pending', this)">⏳ Chờ xác nhận</button>
+            <button class="order-tab" onclick="filterOrders('approve', this)">✅ Đã xác nhận</button>
+            <button class="order-tab" onclick="filterOrders('resolve', this)">🚚 Đã giao</button>
+            <button class="order-tab" onclick="filterOrders('reject', this)">❌ Đã hủy</button>
+        </div>
+
+        <div id="orders-list"></div>
+    </div>
+
+    <div id="footer-placeholder"></div>
+
+    <script src="../js/data.js"></script>
+    <script src="../js/components.js"></script>
+    <script src="../js/app.js"></script>
+    <script>
+        let currentUser = null;
+        let currentFilter = 'all';
+        let cachedOrders = [];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            currentUser = requireAuth();
+            if (!currentUser) return;
+
+            document.getElementById('header-placeholder').innerHTML = renderCustomerHeader();
+            document.getElementById('footer-placeholder').innerHTML = renderFooter();
+            loadOrders();
+        });
+
+        function filterOrders(status, btn) {
+            currentFilter = status;
+            document.querySelectorAll('.order-tab').forEach(t => t.classList.remove('active'));
+            btn.classList.add('active');
+            displayOrders();
+        }
+
+        async function loadOrders() {
+            document.getElementById('orders-list').innerHTML = `
+                <div style="text-align:center;padding:40px;">
+                    <i class="fa-solid fa-spinner fa-spin" style="font-size:2rem;color:var(--accent);"></i>
+                    <p style="margin-top:12px;color:var(--text-light);">Đang tải đơn hàng...</p>
+                </div>`;
+
+            try {
+                const rawItems = await fetchOrdersFromAPI(currentUser.id);
+
+                const ordersMap = {};
+                rawItems.forEach(item => {
+                    if (!ordersMap[item.id]) {
+                        ordersMap[item.id] = {
+                            id: item.id,
+                            payment_method: item.payment_method,
+                            payment_status: item.payment_status,
+                            order_status: item.order_status,
+                            order_date: item.order_date,
+                            items: []
+                        };
+                    }
+                    ordersMap[item.id].items.push({
+                        image_url: item.image_url,
+                        name: item.name,
+                        quantity: item.quantity,
+                        unit_price: item.unit_price
+                    });
+                });
+
+                cachedOrders = Object.values(ordersMap);
+                cachedOrders.sort((a, b) => new Date(b.order_date) - new Date(a.order_date));
+
+                displayOrders();
+            } catch (err) {
+                console.error('Lỗi tải đơn hàng:', err);
+                document.getElementById('orders-list').innerHTML = `
+                    <div class="empty-state animate-fadeInUp">
+                        <div class="empty-icon"><i class="fa-solid fa-exclamation-triangle" style="font-size:2.5rem;color:var(--danger);"></i></div>
+                        <h3>Không thể tải đơn hàng</h3>
+                        <p>Đã xảy ra lỗi khi tải dữ liệu. Vui lòng thử lại.</p>
+                        <button class="btn btn-primary" onclick="loadOrders()">
+                            <i class="fa-solid fa-rotate-right"></i> Thử lại
+                        </button>
+                    </div>`;
+            }
+        }
+
+        function displayOrders() {
+            let orders = [...cachedOrders];
+
+            if (currentFilter !== 'all') {
+                orders = orders.filter(o => o.order_status === currentFilter);
+            }
+
+            if (orders.length === 0) {
+                document.getElementById('orders-list').innerHTML = `
+                    <div class="empty-state animate-fadeInUp">
+                        <div class="empty-icon"><i class="fa-solid fa-inbox" style="font-size:2.5rem;color:var(--text-light);"></i></div>
+                        <h3>${currentFilter === 'all' ? 'Chưa có đơn hàng nào' : 'Không có đơn hàng phù hợp'}</h3>
+                        <p>Hãy mua sắm để có đơn hàng đầu tiên nhé!</p>
+                        <button class="btn btn-primary" onclick="navigateTo('home')">
+                            <i class="fa-solid fa-shopping-bag"></i> Mua sắm ngay
+                        </button>
+                    </div>`;
+                return;
+            }
+
+            document.getElementById('orders-list').innerHTML = orders.map((order, index) => {
+                const statusClass = `status-${order.order_status}`;
+                const statusText = getOrderStatusText(order.order_status);
+
+                const totalAmount = order.items.reduce((sum, item) => sum + item.unit_price * item.quantity, 0);
+
+                const itemsHTML = order.items.map(item => {
+                    const imgSrc = item.image_url;
+                    return `
+                        <div class="order-item">
+                            <div class="order-item-img">
+                                ${imgSrc
+                                    ? `<img src="${imgSrc}" alt="${item.name}" style="width:40px;height:40px;object-fit:cover;border-radius:8px;" onerror="this.outerHTML='<i class=\\'fa-solid fa-leaf\\' style=\\'font-size:1.5rem;color:var(--accent)\\'></i>'">`
+                                    : '<i class="fa-solid fa-leaf" style="font-size:1.5rem;color:var(--accent)"></i>'}
+                            </div>
+                            <span class="order-item-name">${item.name}</span>
+                            <span class="order-item-qty">x${item.quantity}</span>
+                            <span class="order-item-price">${formatPrice(item.unit_price * item.quantity)}</span>
+                        </div>`;
+                }).join('');
+
+                return `
+                <div class="order-card animate-fadeInUp" style="animation-delay:${index * 0.1}s">
+                    <div class="order-header">
+                        <div>
+                            <span class="order-id">Đơn hàng #${order.id}</span>
+                            <span style="margin-left:12px;font-size:0.85rem;color:var(--text-light);">
+                                ${formatDateTime(order.order_date)}
+                            </span>
+                        </div>
+                        <span class="order-status ${statusClass}">${statusText}</span>
+                    </div>
+                    <div class="order-body">${itemsHTML}</div>
+                    <div class="order-footer">
+                        <div class="order-total">
+                            Tổng: <span>${formatPrice(totalAmount)}</span>
+                        </div>
+                        <div style="display:flex;gap:10px;align-items:center;">
+                            <span style="font-size:0.85rem;color:var(--text-light);">
+                                ${(order.payment_method === 'Cash' || order.payment_method === 'COD')
+                                    ? '<i class="fa-solid fa-money-bill-wave"></i> COD'
+                                    : '<i class="fa-solid fa-building-columns"></i> Banking'}
+                                · ${getPaymentStatusText(order.payment_status)}
+                            </span>
+                        </div>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,160 @@
+PHẦN A: LUỒNG NGƯỜI DÙNG (KHÁCH HÀNG)
+1. Xem và Tìm kiếm Sản phẩm
+A1: Khách hàng (KH) không cần đăng nhập vẫn có thể xem danh sách sản phẩm, danh mục sản phẩm
+
+A2: KH có thể tìm kiếm sản phẩm theo các tiêu chí: từ khóa, khoảng giá, danh mục, bộ lọc khác
+
+A3: Khi nhấp vào card sản phẩm, hệ thống hiển thị màn hình chi tiết sản phẩm với đầy đủ thông tin: hình ảnh, mô tả, giá, thông số kỹ thuật
+
+2. Xử lý Giỏ hàng và Mua hàng
+B1: Tại màn hình chi tiết sản phẩm, KH có 2 lựa chọn:
+
+"Thêm vào giỏ hàng": Thêm sản phẩm vào giỏ, ở lại trang hiện tại
+
+"Mua ngay": Thêm sản phẩm vào giỏ và chuyển ngay đến màn hình thanh toán
+
+B2: Khi thực hiện "Thêm vào giỏ hàng" hoặc "Mua ngay":
+
+Nếu KH chưa đăng nhập → Chuyển đến màn hình đăng nhập/đăng ký khi đăng ký người dùng cần nhập email và password , confirm password 
+đăng nhập thì chỉ cần nhập email và password 
+
+Sau khi đăng nhập thành công, tiếp tục xử lý hành động ban đầu
+
+B3: Quản lý giỏ hàng:
+
+KH có thể xem giỏ hàng bất cứ lúc nào
+
+Cho phép KH thực hiện các thao tác: Thêm, Sửa số lượng, Xóa sản phẩm, Xóa toàn bộ giỏ
+
+Hiển thị tổng tiền tạm tính, phí vận chuyển (nếu có), tổng thanh toán
+
+3. Quy trình Thanh toán và Đặt hàng
+C1: Từ giỏ hàng, KH chọn "Thanh toán" để bắt đầu quy trình đặt hàng
+
+C2: Tại màn hình thanh toán, KH thực hiện:
+
+Chọn địa chỉ nhận hàng (có thể thêm mới, sửa, xóa địa chỉ ngay trong giao diện thanh toán)
+
+Chọn SDT (có thể thêm mới, sửa, xóa SDT ngay trong giao diện thanh toán)
+
+Nhập ghi chú cho đơn hàng (nếu có)
+
+Chọn phương thức thanh toán:
+
+Thanh toán khi nhận hàng (COD)
+
+Thanh toán trực tuyến (chuyển khoản, thẻ tín dụng, ví điện tử...)
+
+Xem lại thông tin đơn hàng, sản phẩm, tổng tiền
+
+C3: KH nhấn "Đặt hàng" để hoàn tất:
+
+Hệ thống tạo đơn hàng với các trạng thái khởi tạo:
+
+Trạng thái thanh toán: Chưa thanh toán / Đã thanh toán (tùy phương thức)
+
+Trạng thái đơn hàng: Chờ xác nhận
+
+Trừ số lượng tạm thời (giữ chỗ)
+
+4. Quản lý Đơn hàng của Khách hàng
+D1: KH vào mục "Đơn hàng của tôi" để xem danh sách đơn hàng
+
+D2: Các trạng thái đơn hàng KH có thể theo dõi:
+
+Chờ xác nhận (mới đặt)
+
+Đã xác nhận (NVBH đã xác nhận)
+
+Đang giao (đơn hàng đang được vận chuyển)
+
+Đã giao (giao thành công)
+
+Đã hủy (đơn hàng bị hủy)
+
+D3: Quyền thao tác trên đơn hàng:
+
+Với đơn hàng ở trạng thái Chờ xác nhận: KH có thể yêu cầu hủy đơn (cần NVBH duyệt)
+
+Với đơn hàng Đã thanh toán và muốn hủy/sửa: KH phải liên hệ trực tiếp qua điện thoại với NVBH
+
+KH không thể hủy đơn khi đơn hàng đã chuyển sang trạng thái Đang giao hoặc Đã giao
+
+
+PHẦN B: LUỒNG QUẢN TRỊ (NHÂN VIÊN/ADMIN)
+1. Quản lý Người dùng (User Management)
+E1: Phân quyền hệ thống:
+
+Super Admin: Có toàn quyền, bao gồm CRUD Admin khác
+
+Admin/NVBH: CRUD user thường (không thể tạo/sửa/xóa tài khoản Admin khác)
+
+E2: CRUD thông tin người dùng: Tạo, xem, sửa, xóa, khóa/mở khóa tài khoản KH
+
+E3: Tìm kiếm người dùng 
+
+2. Quản lý Sản phẩm và Danh mục
+F1: CRUD danh mục sản phẩm
+
+F2: CRUD sản phẩm:
+
+Thông tin sản phẩm: tên, mô tả, hình ảnh, giá, thông số kỹ thuật
+
+Liên kết với kho hàng để quản lý số lượng tồn
+
+F3 : Tìm kiếm sản phẩm và danh mục 
+
+4. Quản lý Đơn hàng
+H1: Xem danh sách đơn hàng theo các trạng thái
+
+H2: Xác nhận đơn hàng:
+
+Đơn COD: Gọi điện xác nhận với KH trước khi duyệt
+
+Đơn đã thanh toán: Xác nhận và chuyển sang xử lý giao hàng
+
+H4: Cập nhật trạng thái giao hàng:
+
+Khi bắt đầu giao: Đang giao
+
+Giao thành công: Đã giao
+
+Giao thất bại: Đã hủy 
+
+H5 : Tìm kiếm đơn hàng 
+
+5. Báo cáo và Thống kê
+I1: Thống kê doanh thu theo ngày/tuần/tháng/năm
+
+I2: Thống kê sản phẩm bán chạy
+
+I3: Thống kê đơn hàng theo trạng thái
+
+I4: Thống kê kho 
+
+I5: Xuất báo cáo (Excel/PDF)
+
+
+PHẦN C: QUY TẮC NGHIỆP VỤ & NGOẠI LỆ
+1. Quy tắc về Kho hàng và Số lượng
+K1: KH có thể thêm bất kỳ số lượng sản phẩm nào vào giỏ hàng miễn < số lượng hiện có 
+
+K2: Khi KH đặt hàng thành công:
+
+K3: Khi đơn hàng bị hủy (bất kỳ lý do gì):
+
+Số lượng sản phẩm từ đơn hủy được cộng lại vào tồn kho
+
+2. Quy tắc Xử lý Đơn hàng
+L1: Thời gian cho phép hủy đơn (KH tự hủy qua hệ thống): trong vòng 10 phút sau khi đặt hàng và đơn ở trạng thái "Chờ xác nhận"
+
+L3: Đơn COD chỉ được xác nhận sau khi đã gọi điện xác nhận với KH
+
+L4: Đơn đã thanh toán online:
+
+Nếu KH muốn hủy, cần liên hệ NVBH qua điện thoại
+
+3. Quy tắc Phân quyền
+
+M1: Super Admin: Full quyền, có thể tạo/sửa/xóa tài khoản Staff và Users khác
+Không được tạo/sửa/xóa tài khoản Admin khác

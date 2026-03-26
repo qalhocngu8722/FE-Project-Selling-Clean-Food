@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FreshQAL - Rau Củ Quả Tươi Sạch Mỗi Ngày</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="./fontawesome-free-6.6.0-web/css/all.css">
+</head>
+<body>
+
+<!-- Header -->
+<div id="header"></div>
+
+<!-- Hero Section -->
+<section class="hero">
+    <div class="hero-content">
+        <div class="hero-text">
+            <h1>Rau Củ Quả <span class="highlight">Tươi Sạch</span> Mỗi Ngày</h1>
+            <p class="hero-subtitle">Nông sản hữu cơ, được tuyển chọn kỹ lưỡng từ các trang trại uy tín. Giao hàng tận nơi trong ngày, đảm bảo tươi ngon cho bữa ăn gia đình bạn.</p>
+            <div class="hero-buttons">
+                <a href="#products" class="btn btn-primary btn-lg">Mua sắm ngay</a>
+                <a href="#features" class="btn btn-outline btn-lg">Tìm hiểu thêm</a>
+            </div>
+            <div class="hero-stats">
+                <div class="stat-item">
+                    <span class="stat-number">1000+</span>
+                    <span class="stat-label">Sản phẩm</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">100%</span>
+                    <span class="stat-label">Nguồn Gốc Rõ Ràng</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">100%</span>
+                    <span class="stat-label">Tươi sạch</span>
+                </div>
+            </div>
+        </div>
+        <div class="hero-visual">
+            <div class="hero-decorations">
+                <span class="floating-deco deco-drift" style="top:3%;left:12%;animation-delay:0s;animation-duration:5.2s;">🥦</span>
+                <span class="floating-deco deco-sway" style="top:11%;left:62%;animation-delay:1.9s;animation-duration:7.1s;">🍅</span>
+                <span class="floating-deco deco-bob" style="top:18%;right:-3%;animation-delay:0.4s;animation-duration:6.4s;">🌽</span>
+                <span class="floating-deco deco-bob" style="top:26%;left:35%;animation-delay:2.6s;animation-duration:5.7s;">🥑</span>
+                <span class="floating-deco deco-drift" style="top:38%;left:4%;animation-delay:1.1s;animation-duration:6.9s;">🥕</span>
+                <span class="floating-deco deco-sway" style="top:42%;right:8%;animation-delay:0.6s;animation-duration:7.6s;">🍆</span>
+                <span class="floating-deco deco-sway" style="top:52%;left:55%;animation-delay:2.2s;animation-duration:5.4s;">🍍</span>
+                <span class="floating-deco deco-bob" style="top:63%;left:18%;animation-delay:0.8s;animation-duration:6.1s;">🍋</span>
+                <span class="floating-deco deco-drift" style="top:70%;right:28%;animation-delay:1.5s;animation-duration:7.3s;">🥬</span>
+                <span class="floating-deco deco-bob" style="top:78%;left:88%;animation-delay:0.2s;animation-duration:5.8s;">🍊</span>
+                <span class="floating-deco deco-drift" style="top:86%;left:40%;animation-delay:2.8s;animation-duration:6.6s;">🥒</span>
+                <span class="floating-deco deco-sway" style="top:92%;left:5%;animation-delay:1.3s;animation-duration:5.1s;">🍇</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Categories Section -->
+<section class="section reveal" id="categories">
+    <div class="container">
+        <div class="section-header">
+            <h2>Danh mục sản phẩm</h2>
+            <p>Khám phá các danh mục rau củ quả tươi sạch của chúng tôi</p>
+        </div>
+        <div class="category-grid" id="categoryGrid"></div>
+    </div>
+</section>
+
+<!-- Products Section -->
+<section class="section reveal" id="products">
+    <div class="container">
+        <div class="section-header">
+            <h2>Sản phẩm nổi bật</h2>
+            <p>Những sản phẩm tươi ngon, chất lượng được khách hàng yêu thích nhất</p>
+        </div>
+        <div class="filter-bar">
+            <div class="filter-group">
+                <select id="filterCategory" onchange="filterProducts()">
+                    <option value="">Tất cả danh mục</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <select id="filterSort" onchange="filterProducts()">
+                    <option value="">Sắp xếp</option>
+                    <option value="price_asc">Giá tăng dần</option>
+                    <option value="price_desc">Giá giảm dần</option>
+                    <option value="name_asc">Tên A → Z</option>
+                    <option value="newest">Mới nhất</option>
+                </select>
+            </div>
+            <div class="filter-group filter-price">
+                <input type="number" id="filterMinPrice" placeholder="Giá từ" onchange="filterProducts()">
+                <span>—</span>
+                <input type="number" id="filterMaxPrice" placeholder="Giá đến" onchange="filterProducts()">
+            </div>
+        </div>
+        <div class="product-grid" id="productGrid"></div>
+        <div class="text-center" id="viewAllWrapper" style="margin-top:32px;display:none;">
+            <button class="btn btn-outline btn-lg" onclick="showAllProducts()">Xem tất cả sản phẩm</button>
+        </div>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section class="section reveal" id="features">
+    <div class="container">
+        <div class="section-header">
+            <h2>Tại sao chọn FreshQAL?</h2>
+            <p>Chúng tôi cam kết mang đến trải nghiệm mua sắm tốt nhất</p>
+        </div>
+        <div class="feature-grid">
+            <div class="feature-card">
+                <div class="feature-icon"><i class="fa-solid fa-leaf"></i></div>
+                <h3>Tươi sạch 100%</h3>
+                <p>Rau củ quả được thu hoạch trong ngày, đảm bảo tươi sạch và an toàn vệ sinh thực phẩm.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon"><i class="fa-solid fa-truck"></i></div>
+                <h3>Giao hàng nhanh</h3>
+                <p>Giao hàng trong vòng 2 giờ nội thành, đóng gói cẩn thận giữ nguyên độ tươi ngon.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon"><i class="fa-solid fa-tags"></i></div>
+                <h3>Giá tốt nhất</h3>
+                <p>Cam kết giá tốt nhất thị trường, lấy trực tiếp từ nông trại không qua trung gian.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon"><i class="fa-solid fa-headset"></i></div>
+                <h3>Hỗ trợ 24/7</h3>
+                <p>Đội ngũ chăm sóc khách hàng luôn sẵn sàng hỗ trợ bạn mọi lúc, mọi nơi.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA Banner -->
+<section class="cta-banner reveal">
+    <div class="container">
+        <div class="cta-content">
+            <h2>Đăng ký nhận ưu đãi (kiểm tra nếu người dùng đã đăng nhập thì ẩn đi container này)</h2>
+            <p>Nhận ngay voucher giảm giá cho đơn hàng đầu tiên và cập nhật khuyến mãi hàng tuần.</p>
+            <form class="cta-form" onsubmit="event.preventDefault(); redirect_register();">
+                <button type="submit" class="btn btn-primary btn-lg">Đăng ký Ngay</button>
+            </form>
+        </div>
+    </div>
+</section>
+
+<!-- Footer -->
+<div id="footer"></div>
+
+<script src="js/data.js"></script>
+<script src="js/app.js"></script>
+<script src="js/components.js"></script>
+<script>
+    const PRODUCTS_PER_PAGE = 8;
+    let showAll = false;
+    let activeCategory = '';
+
+    document.getElementById('header').innerHTML = renderCustomerHeader('home');
+    document.getElementById('footer').innerHTML = renderFooter();
+
+    /* ── Categories ── */
+    async function renderCategories() {
+        const categories = await getCategories();
+        console.log('Categories:', categories);
+        const grid = document.getElementById('categoryGrid');
+        grid.innerHTML = categories.map(cat => `
+            <div id="${cat.id}" class="category-card ${activeCategory == cat.id ? 'active' : ''}" onclick="selectCategory(${cat.id})">
+                <div class="category-icon">${cat.icon ? cat.icon : '<i class=\'fa-solid fa-leaf\'></i>'}</div>
+                <h4>${cat.name}</h4>
+                <p>${cat.description}</p>
+            </div>
+        `).join('');
+    }
+    function redirect_register(){
+        window.location.href = "login.html";
+    }
+
+    function selectCategory(catId) {
+        activeCategory = activeCategory == catId ? '' : catId;
+        document.getElementById('filterCategory').value = activeCategory;
+        renderCategories();
+        filterProducts();
+        document.getElementById('products').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    /* ── Products ── */
+    async function filterProducts() {
+        const keyword = getUrlParam('search') || '';
+        const categoryId = document.getElementById('filterCategory').value || activeCategory;
+        const sort = document.getElementById('filterSort').value;
+        const minPrice = document.getElementById('filterMinPrice').value;
+        const maxPrice = document.getElementById('filterMaxPrice').value;
+
+        const filters = {};
+        if (categoryId) filters.category_id = categoryId;
+        if (sort) filters.sort = sort;
+        if (minPrice) filters.min_price = minPrice;
+        if (maxPrice) filters.max_price = maxPrice;
+
+        let products = await getProducts();
+        // Lọc theo keyword
+        if (keyword) {
+            const kw = keyword.toLowerCase();
+            products = products.filter(p =>
+                p.product_name.toLowerCase().includes(kw) ||
+                p.description.toLowerCase().includes(kw) ||
+                p.origin.toLowerCase().includes(kw)
+            );
+        }
+        // Lọc theo category
+        if (filters.category_id) {
+            products = products.filter(p => p.category_id === parseInt(filters.category_id));
+        }
+        // Lọc theo giá
+        if (filters.min_price) {
+            products = products.filter(p => p.price >= parseInt(filters.min_price));
+        }
+        if (filters.max_price) {
+            products = products.filter(p => p.price <= parseInt(filters.max_price));
+        }
+        // Lọc theo food_type nếu có
+        if (filters.food_type) {
+            products = products.filter(p => p.food_type === filters.food_type);
+        }
+        // Sắp xếp
+        if (filters.sort) {
+            switch (filters.sort) {
+                case 'price_asc': products.sort((a, b) => a.price - b.price); break;
+                case 'price_desc': products.sort((a, b) => b.price - a.price); break;
+                case 'name_asc': products.sort((a, b) => a.name.localeCompare(b.name)); break;
+                case 'newest': products.sort((a, b) => b.id - a.id); break;
+            }
+        }
+        renderProductGrid(products);
+    }
+
+    function renderProductGrid(products) {
+        const grid = document.getElementById('productGrid');
+        const wrapper = document.getElementById('viewAllWrapper');
+
+        if (products.length === 0) {
+            grid.innerHTML = '<div class="empty-state"><span style="font-size:3rem;">🔍</span><h3>Không tìm thấy sản phẩm</h3><p>Hãy thử thay đổi bộ lọc hoặc từ khóa tìm kiếm.</p></div>';
+            wrapper.style.display = 'none';
+            return;
+        }
+
+        const display = showAll ? products : products.slice(0, PRODUCTS_PER_PAGE);
+        grid.innerHTML = display.map(p => renderProductCard(p)).join('');
+        wrapper.style.display = (!showAll && products.length > PRODUCTS_PER_PAGE) ? 'block' : 'none';
+    }
+
+    function showAllProducts() {
+        showAll = true;
+        filterProducts();
+    }
+
+    /* ── Populate filter selects ── */
+    async function populateFilters() {
+        const categories = await getCategories();
+        const catSelect = document.getElementById('filterCategory');
+        categories.forEach(cat => {
+            const opt = document.createElement('option');
+            opt.value = cat.id;
+            opt.textContent = cat.name;
+            catSelect.appendChild(opt);
+        });
+    }
+
+    /* ── Handle search URL param ── */
+    function handleSearchParam() {
+        const search = getUrlParam('search');
+        if (search) {
+            const input = document.getElementById('globalSearch');
+            if (input) input.value = search;
+            showAll = true;
+            document.getElementById('products').scrollIntoView({ behavior: 'smooth' });
+        }
+    }
+
+    /* ── Init ── */
+    (async function() {
+        await populateFilters();
+        await renderCategories();
+        await filterProducts();
+        handleSearchParam();
+    })();
+</script>
+
+</body>
+</html>

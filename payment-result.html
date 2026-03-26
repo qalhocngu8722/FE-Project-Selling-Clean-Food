@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kết quả thanh toán</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f0f4f8;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 16px;
+      padding: 48px 40px;
+      width: 100%;
+      max-width: 480px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.10);
+      text-align: center;
+    }
+
+    /* ---- LOADING ---- */
+    .spinner {
+      width: 56px; height: 56px;
+      border: 5px solid #e2e8f0;
+      border-top-color: #4f8ef7;
+      border-radius: 50%;
+      animation: spin 0.9s linear infinite;
+      margin: 0 auto 24px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ---- ICON SUCCESS / FAIL ---- */
+    .icon-wrap {
+      width: 80px; height: 80px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 24px;
+      font-size: 38px;
+    }
+    .icon-success { background: #e6f9f0; color: #22c55e; }
+    .icon-fail    { background: #fff1f1; color: #ef4444; }
+
+    h2 { font-size: 22px; font-weight: 700; margin-bottom: 8px; color: #1e293b; }
+    .sub { font-size: 14px; color: #64748b; margin-bottom: 28px; line-height: 1.6; }
+
+    /* ---- INFO TABLE ---- */
+    .info-table {
+      background: #f8fafc;
+      border-radius: 10px;
+      padding: 16px 20px;
+      text-align: left;
+      margin-bottom: 28px;
+    }
+    .info-row {
+      display: flex; justify-content: space-between;
+      padding: 7px 0;
+      border-bottom: 1px solid #e2e8f0;
+      font-size: 14px;
+    }
+    .info-row:last-child { border-bottom: none; }
+    .info-label { color: #64748b; }
+    .info-value { color: #1e293b; font-weight: 600; text-align: right; max-width: 60%; word-break: break-all; }
+
+    /* ---- BADGE ---- */
+    .badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 99px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .badge-success { background: #dcfce7; color: #16a34a; }
+    .badge-fail    { background: #fee2e2; color: #dc2626; }
+    .badge-pending { background: #fef9c3; color: #ca8a04; }
+
+    /* ---- BUTTONS ---- */
+    .btn {
+      display: inline-block;
+      padding: 12px 28px;
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      text-decoration: none;
+      transition: opacity 0.2s;
+    }
+    .btn:hover { opacity: 0.85; }
+    .btn-primary { background: #4f8ef7; color: #fff; }
+    .btn-outline { background: #fff; color: #4f8ef7; border: 2px solid #4f8ef7; margin-left: 10px; }
+
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+
+<div class="card">
+
+  <!-- LOADING STATE -->
+  <div id="state-loading">
+    <div class="spinner"></div>
+    <h2>Đang xác thực giao dịch...</h2>
+    <p class="sub">Vui lòng chờ trong giây lát</p>
+  </div>
+
+  <!-- SUCCESS STATE -->
+  <div id="state-success" class="hidden">
+    <div class="icon-wrap icon-success">✓</div>
+    <h2>Thanh toán thành công!</h2>
+    <p class="sub">Đơn hàng của bạn đã được xác nhận và sẽ sớm giao đến bạn.<br/>Cảm ơn bạn đã mua hàng.</p>
+    <div class="info-table" id="info-success"></div>
+    <a href="index.html" class="btn btn-primary">Về trang chủ</a>
+    <a href="orders.html" class="btn btn-outline">Đơn hàng của tôi</a>
+  </div>
+
+  <!-- FAIL STATE -->
+  <div id="state-fail" class="hidden">
+    <div class="icon-wrap icon-fail">✕</div>
+    <h2>Thanh toán thất bại</h2>
+    <p class="sub" id="fail-message">Giao dịch không thành công. Vui lòng thử lại.</p>
+    <div class="info-table" id="info-fail"></div>
+    <a href="index.html" class="btn btn-primary">Về trang chủ</a>
+    <button onclick="retryPayment()" class="btn btn-outline">Thử lại</button>
+  </div>
+
+</div>
+
+<script>
+  const BE_URL = 'https://localhost:7128';
+
+  // Mapping mã lỗi VNPay → thông báo tiếng Việt
+  const VNP_CODES = {
+    '00': 'Giao dịch thành công',
+    '07': 'Trừ tiền thành công nhưng giao dịch bị nghi ngờ',
+    '09': 'Thẻ/Tài khoản chưa đăng ký dịch vụ Internet Banking',
+    '10': 'Xác thực thông tin thẻ/tài khoản quá 3 lần',
+    '11': 'Đã hết hạn chờ thanh toán',
+    '12': 'Thẻ/Tài khoản bị khóa',
+    '13': 'Sai mật khẩu OTP',
+    '24': 'Khách hàng hủy giao dịch',
+    '51': 'Tài khoản không đủ số dư',
+    '65': 'Vượt hạn mức giao dịch trong ngày',
+    '75': 'Ngân hàng đang bảo trì',
+    '79': 'Sai mật khẩu thanh toán quá số lần quy định',
+    '99': 'Lỗi không xác định',
+  };
+
+  function formatMoney(amount) {
+    if (!amount) return '—';
+    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' })
+      .format(Number(amount) / 100);
+  }
+
+  function buildInfoHtml(rows) {
+    return rows.map(([label, value, badgeClass]) => `
+      <div class="info-row">
+        <span class="info-label">${label}</span>
+        <span class="info-value">${badgeClass
+          ? `<span class="badge ${badgeClass}">${value}</span>`
+          : value}</span>
+      </div>`).join('');
+  }
+
+  function showSuccess(params, verifyData) {
+    document.getElementById('state-loading').classList.add('hidden');
+    document.getElementById('state-success').classList.remove('hidden');
+
+    let responseVNpay = location.search.replace("?", "").split("&").reduce((res, item) => {
+      const [key, value] = item.split("=");
+      res[key] = value;
+      return res;
+    }, {});
+    let orderIdpaying = localStorage.getItem("orderIdpaying");
+
+    Promise.all([
+      fetch(`${BE_URL}/api/payments/paymenttransaction/addnew`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          order_id: parseInt(orderIdpaying),
+          amount: responseVNpay.vnp_Amount,
+          payment_method: 'Banking',
+          transaction_id: responseVNpay.vnp_TxnRef,
+          status: 'resolve',
+          paid_at: new Date().toISOString()
+        })
+      }),
+      fetch(`${BE_URL}/api/Orders/Orders/UpdateOrder?id=${orderIdpaying}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          order_status: 'approve'
+        })
+      })
+    ]).then(([payRes, orderRes]) => {
+      console.log('Payment transaction saved:', payRes.ok);
+      console.log('Order status updated:', orderRes.ok);
+    }).catch(err => {
+      console.error('Error updating payment/order:', err);
+    });
+
+    document.getElementById('info-success').innerHTML = buildInfoHtml([
+      ['Mã thanh toán',    params.get('vnp_TxnRef') || '—'],
+      ['Số tiền',        formatMoney(params.get('vnp_Amount'))],
+      ['Ngân hàng',      params.get('vnp_BankCode') || '—'],
+      ['Mã GD ngân hàng',params.get('vnp_BankTranNo') || '—'],
+      ['Mã GD VNPay',    params.get('vnp_TransactionNo') || '—'],
+      ['Trạng thái',     'Thành công', 'badge-success'],
+    ]);
+
+    localStorage.setItem("orderIdpaying", 0);
+  }
+
+  function showFail(params, code) {
+    document.getElementById('state-loading').classList.add('hidden');
+    document.getElementById('state-fail').classList.remove('hidden');
+
+    let responseVNpay = location.search.replace("?", "").split("&").reduce((res, item) => {
+      const [key, value] = item.split("=");
+      res[key] = value;
+      return res;
+    }, {});
+    let orderIdpaying = localStorage.getItem("orderIdpaying");
+
+    fetch(`${BE_URL}/api/payments/paymenttransaction/addnew`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        order_id: parseInt(orderIdpaying),
+        amount: responseVNpay.vnp_Amount,
+        payment_method: 'Banking',
+        transaction_id: responseVNpay.vnp_TxnRef,
+        status: 'reject',
+        paid_at: new Date().toISOString()
+      })
+    }).then(res => {
+      console.log('Failed payment transaction saved:', res.ok);
+    }).catch(err => {
+      console.error('Error saving failed payment:', err);
+    });
+
+    const codeMsg = VNP_CODES[code] || `Lỗi mã ${code}`;
+    document.getElementById('fail-message').textContent = codeMsg;
+
+    document.getElementById('info-fail').innerHTML = buildInfoHtml([
+      ['Mã thanh toán', params.get('vnp_TxnRef') || '—'],
+      ['Số tiền',     formatMoney(params.get('vnp_Amount'))],
+      ['Ngân hàng',   params.get('vnp_BankCode') || '—'],
+      ['Lý do',       codeMsg],
+    ]);
+  }
+
+  async function verifyPayment() {
+    const queryString = window.location.search;
+
+    if (!queryString || !queryString.includes('vnp_')) {
+      showFail(new URLSearchParams(), '99');
+      document.getElementById('fail-message').textContent =
+        'Không tìm thấy thông tin giao dịch.';
+      return;
+    }
+
+    const params = new URLSearchParams(queryString);
+    const responseCode = params.get('vnp_ResponseCode');
+
+    try {
+      const res = await fetch(`${BE_URL}/api/VnPay/VerifyPayment${queryString}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        showSuccess(params, data);
+        
+      } else {
+        showFail(params, responseCode || '99');
+      }
+    } catch (err) {
+      console.error('BE verify error:', err);
+      if (responseCode === '00') {
+        showSuccess(params, null);
+      } else {
+        showFail(params, responseCode || '99');
+      }
+    }
+  }
+
+  function retryPayment() {
+    // Quay về trang giỏ hàng hoặc trang checkout
+    window.location.href = 'cart.html';
+  }
+
+  verifyPayment();
+</script>
+
+</body>
+</html>
