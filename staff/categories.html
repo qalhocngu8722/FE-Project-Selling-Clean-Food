@@ -135,8 +135,8 @@
         const isEdit = editId !== null;
 
         const url = isEdit
-            ? `https://localhost:7128/api/DanhMucSP/ProductCategory/UpdateProductCategory?id=${editId}`
-            : 'https://localhost:7128/api/DanhMucSP/ProductCategory/Addnew';
+            ? `https://besellingcleanfood0604-production.up.railway.app/api/DanhMucSP/ProductCategory/UpdateProductCategory?id=${editId}`
+            : 'https://besellingcleanfood0604-production.up.railway.app/api/DanhMucSP/ProductCategory/Addnew';
         console.log("url la : ",url);
         const method = isEdit ? 'PUT' : 'POST';
 
@@ -206,7 +206,7 @@
         if (!confirm(`Bạn có chắc muốn xóa danh mục "${c.name}"?`)) return;
 
         try {
-            const res = await fetch(`https://localhost:7128/api/DanhMucSP/ProductCategory/DeleteProductCategory?id=${id}`, {
+            const res = await fetch(`https://besellingcleanfood0604-production.up.railway.app/api/DanhMucSP/ProductCategory/DeleteProductCategory?id=${id}`, {
                 method: 'DELETE',
             });
             if (!res.ok) {

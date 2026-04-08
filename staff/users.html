@@ -278,7 +278,7 @@
         renderUsers();
     }
     async function apiAddUser(user) {
-        const res = await fetch('https://localhost:7128/api/Users/Users/Addnew', {
+        const res = await fetch('https://besellingcleanfood0604-production.up.railway.app/api/Users/Users/Addnew', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(user)
@@ -288,7 +288,7 @@
     }
     async function apiUpdateUser(id, user) {
         console.log(JSON.stringify(user));
-        const res = await fetch(`https://localhost:7128/api/Users/Users/UpdateUser?id=${id}`, {
+        const res = await fetch(`https://besellingcleanfood0604-production.up.railway.app/api/Users/Users/UpdateUser?id=${id}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(user)
@@ -308,7 +308,7 @@
         }
         if (!confirm(`Bạn có chắc muốn xóa người dùng "${user_dlt.name}"?`)) return;
 
-        const res = await fetch(`https://localhost:7128/api/Users/Users/DeleteUser?id=${id}`, {
+        const res = await fetch(`https://besellingcleanfood0604-production.up.railway.app/api/Users/Users/DeleteUser?id=${id}`, {
             method: 'DELETE'
         });
         if (!res.ok) throw new Error(await res.text());

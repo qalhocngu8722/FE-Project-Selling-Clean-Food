@@ -87,7 +87,7 @@
                 return;
             }
             try {
-                const res = await fetch(`https://localhost:7128/api/SanPham/Get_Detail_Product_With_Related?id=${productId}`);
+                const res = await fetch(`https://besellingcleanfood0604-production.up.railway.app/api/SanPham/Get_Detail_Product_With_Related?id=${productId}`);
                 if (!res.ok) throw new Error('API error');
                 const data = await res.json();
                 currentProduct = data;
@@ -119,12 +119,12 @@
             const images = Array.isArray(p.image_url) ? p.image_url : [];
             let mainImg = images.find(img => img.is_primary) || images[0];
             let mainImgUrl = mainImg ? mainImg.image_url : '';
-            document.getElementById('pd-main-image').innerHTML = mainImgUrl ? `<img src="https://localhost:7128${mainImgUrl}" alt="${p.name}" style="max-width:100%;object-fit:contain;" />` : '<span>🥬</span>';
+            document.getElementById('pd-main-image').innerHTML = mainImgUrl ? `<img src="https://besellingcleanfood0604-production.up.railway.app${mainImgUrl}" alt="${p.name}" style="max-width:100%;object-fit:contain;" />` : '<span>🥬</span>';
 
             // Thumbnails
             document.getElementById('pd-thumbnails').innerHTML = images.map((img, i) => `
-                <div class="pd-thumb ${img.is_primary ? 'active' : ''}" onclick="changeMainImage('https://localhost:7128${img.image_url}', this)">
-                    <img src="https://localhost:7128${img.image_url}" alt="thumb" style="width:48px;height:48px;object-fit:contain;border-radius:8px;" />
+                <div class="pd-thumb ${img.is_primary ? 'active' : ''}" onclick="changeMainImage('https://besellingcleanfood0604-production.up.railway.app${img.image_url}', this)">
+                    <img src="https://besellingcleanfood0604-production.up.railway.app${img.image_url}" alt="thumb" style="width:48px;height:48px;object-fit:contain;border-radius:8px;" />
                 </div>
             `).join('');
 

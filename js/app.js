@@ -53,7 +53,7 @@ let _currentOrderItems = [];
 // Hàm load order_item hiện tại của user (gọi khi login hoặc reload page)
 async function loadCurrentOrderItems(cart_id) {
     try {
-        const res = await fetch(`https://localhost:7128/api/Cart_Item/CartItem/GetCartItemsByCartId?cartId=${cart_id}`);
+        const res = await fetch(`https://besellingcleanfood0604-production.up.railway.app/api/Cart_Item/CartItem/GetCartItemsByCartId?cartId=${cart_id}`);
         if (res.ok) {
             _currentOrderItems = await res.json();
         } else {
@@ -100,14 +100,14 @@ async function addToCart(cart_id, productId, quantity = 1) {
             console.log('Product ID:', productId);
             // Nếu đã có, gọi API update số lượng
             console.log(JSON.stringify({ quantity: newQty }));
-            res = await fetch(`https://localhost:7128/api/Cart_Item/CartItem/UpdateCartItem?id=${orderItem.id}&quantity=${newQty}`, {
+            res = await fetch(`https://besellingcleanfood0604-production.up.railway.app/api/Cart_Item/CartItem/UpdateCartItem?id=${orderItem.id}&quantity=${newQty}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' }
             });
 
         } else {
             // Nếu chưa có, gọi API add mới
-            res = await fetch('https://localhost:7128/api/Cart_Item/CartItem/Addnew', {
+            res = await fetch('https://besellingcleanfood0604-production.up.railway.app/api/Cart_Item/CartItem/Addnew', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -133,7 +133,7 @@ async function addToCart(cart_id, productId, quantity = 1) {
 }
 
 async function removeFromCart(productId,element_del) {
-    const del = await fetch(`https://localhost:7128/api/Cart_Item/CartItem/DeleteCartItem?id=${productId}`, {
+    const del = await fetch(`https://besellingcleanfood0604-production.up.railway.app/api/Cart_Item/CartItem/DeleteCartItem?id=${productId}`, {
         method: 'DELETE'
     });
     if(del.ok){
@@ -167,7 +167,7 @@ function updateCartQuantity(productId, quantity) {
 }
 
 async function clearCart(id) {
-    const res = await fetch(`https://localhost:7128/api/Cart_Item/CartItem/ClearAllbyUserId?userid=${id}`, {
+    const res = await fetch(`https://besellingcleanfood0604-production.up.railway.app/api/Cart_Item/CartItem/ClearAllbyUserId?userid=${id}`, {
         method: 'DELETE'
     });
     if(res.ok){

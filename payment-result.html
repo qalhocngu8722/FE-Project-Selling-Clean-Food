@@ -136,7 +136,7 @@
 <script src="../js/components.js"></script>
 <script src="../js/app.js"></script>
 <script>
-  const BE_URL = 'https://localhost:7128';
+  const BE_URL = 'https://besellingcleanfood0604-production.up.railway.app';
 
   // Mapping mã lỗi VNPay → thông báo tiếng Việt
   const VNP_CODES = {
@@ -185,7 +185,7 @@
 
     // _______ Thêm order item sau khi thanh toán thành công _______
     const cart = await fetchCartFromAPI(localStorage.getItem('id_current_user'));
-    const orderItemsApi = 'https://localhost:7128/api/Order_Item_/AddNew';
+    const orderItemsApi = 'https://besellingcleanfood0604-production.up.railway.app/api/Order_Item_/AddNew';
     // Chuẩn bị mảng order item
     const detail_orders = await Promise.all(cart.map(async item => {
         return {
@@ -238,7 +238,7 @@
           paid_at: new Date().toISOString()
         })
       }),
-      fetch(`https://localhost:7128/api/Orders/Update_status_order?orderId=${orderIdpaying}&payment_status=resolve&order_status=pending`, {
+      fetch(`https://besellingcleanfood0604-production.up.railway.app/api/Orders/Update_status_order?orderId=${orderIdpaying}&payment_status=resolve&order_status=pending`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' }
       })

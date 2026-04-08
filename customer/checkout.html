@@ -212,7 +212,7 @@
 
                 itemsHTML += `
                     <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px dashed var(--border);">
-                        <img style="" src="https://localhost:7128${item.image_url}" alt="Ảnh" class="summary-item-img">
+                        <img style="" src="https://besellingcleanfood0604-production.up.railway.app${item.image_url}" alt="Ảnh" class="summary-item-img">
                         <div style="flex:1;">
                             <div style="font-weight:600;font-size:0.9rem;">${product.name}</div>
                             <div style="font-size:0.82rem;color:var(--text-light);">x${item.quantity}</div>
@@ -315,7 +315,7 @@
 
             try {
                 console.log('Đang gửi payload đơn hàng:', orderPayload);
-                const res = await fetch('https://localhost:7128/api/Orders/Orders/Addnew', {
+                const res = await fetch('https://besellingcleanfood0604-production.up.railway.app/api/Orders/Orders/Addnew', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(orderPayload)
@@ -333,7 +333,7 @@
                             orderId: order,
                             amount: totalAmount
                         }));
-                    const vnpayRes = await fetch('https://localhost:7128/api/VnPay/CreatePaymentUrl', {
+                    const vnpayRes = await fetch('https://besellingcleanfood0604-production.up.railway.app/api/VnPay/CreatePaymentUrl', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
@@ -352,7 +352,7 @@
                     }, 500);
                 } else {
                         // Sau khi tạo đơn hàng thành công, push toàn bộ Order_Item
-                        const orderItemsApi = 'https://localhost:7128/api/Order_Item_/AddNew';
+                        const orderItemsApi = 'https://besellingcleanfood0604-production.up.railway.app/api/Order_Item_/AddNew';
                         // Chuẩn bị mảng order item
                         const detail_orders = await Promise.all(cart.map(async item => {
                             //const product = await getProductById(item.product_id);

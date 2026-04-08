@@ -157,7 +157,7 @@ function renderProductCard(product) {
     return `
     <div product-id="${id}" class="product-card" onclick="navigateToProduct(${id})">
         <div class="card-img">
-            <img src="https://localhost:7128${imgUrl}" alt="${name}" onerror="this.style.display='none'" style="max-width:100%;object-fit:contain;" />
+            <img src="https://besellingcleanfood0604-production.up.railway.app${imgUrl}" alt="${name}" onerror="this.style.display='none'" style="max-width:100%;object-fit:contain;" />
         </div>
         <div class="card-body">
             <div class="card-category" style="display:flex;gap:6px;flex-wrap:wrap;">

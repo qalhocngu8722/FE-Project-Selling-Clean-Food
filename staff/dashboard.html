@@ -130,7 +130,7 @@
         }
     })();
     async function GetListProductSellWell(){
-        const api = `https://localhost:7128/api/SanPham/Render_Product_sellwell_Dashbroads`;
+        const api = `https://besellingcleanfood0604-production.up.railway.app/api/SanPham/Render_Product_sellwell_Dashbroads`;
         let list1 = await fetch(api);
         if(!list1.ok){
             showToast('Không thể tải dữ liệu sản phẩm bán chạy!', 'error');

@@ -244,7 +244,7 @@
     async function getRevenueByMonthYear(option) {
         try {
             const response = await fetch(
-                `https://localhost:7128/api/Orders/Orders/RevenueByMonthCurrentYear?option=${option}`,
+                `https://besellingcleanfood0604-production.up.railway.app/api/Orders/Orders/RevenueByMonthCurrentYear?option=${option}`,
                 {
                     method: 'GET',
                     headers: {
@@ -368,7 +368,7 @@
      */
     async function getRevenueByDayCurrentMonth() {
         try {
-            const response = await fetch('https://localhost:7128/api/Orders/Orders/RevenueByDayCurrentMonth', {
+            const response = await fetch('https://besellingcleanfood0604-production.up.railway.app/api/Orders/Orders/RevenueByDayCurrentMonth', {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',

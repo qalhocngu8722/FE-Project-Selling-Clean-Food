@@ -243,7 +243,7 @@
         }
 
         try {
-            let url = `https://localhost:7128/api/Orders/Update_status_order?orderId=${id}&order_status=${newStatus}`;
+            let url = `https://besellingcleanfood0604-production.up.railway.app/api/Orders/Update_status_order?orderId=${id}&order_status=${newStatus}`;
             
             const res = await fetch(url, {
                 method: 'PUT',

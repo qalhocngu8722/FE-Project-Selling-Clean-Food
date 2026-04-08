@@ -145,7 +145,7 @@ let _productsCache = null;
 
 async function _fetchProductsFromAPI() {
     try {
-        const res = await fetch('https://localhost:7128/api/SanPham/Get_List_Product_homepage');
+        const res = await fetch('https://besellingcleanfood0604-production.up.railway.app/api/SanPham/Get_List_Product_homepage');
         if (!res.ok) throw new Error('HTTP ' + res.status);
         const data = await res.json();
         return data;
@@ -156,7 +156,7 @@ async function _fetchProductsFromAPI() {
 }
 
 async function getProducts() {
-    let listproducts = await fetch(`https://localhost:7128/api/SanPham/GetAllSanPham`);
+    let listproducts = await fetch(`https://besellingcleanfood0604-production.up.railway.app/api/SanPham/GetAllSanPham`);
     if (listproducts.ok) {
         const data = await listproducts.json();
         _productsCache = data;
@@ -172,7 +172,7 @@ let _categoriesCache = null;
 
 async function _fetchCategoriesFromAPI() {
     try {
-        const res = await fetch('https://localhost:7128/api/DanhMucSP/ProductCategory/Getall');
+        const res = await fetch('https://besellingcleanfood0604-production.up.railway.app/api/DanhMucSP/ProductCategory/Getall');
         if (!res.ok) throw new Error('HTTP ' + res.status);
         let data = await res.json();
         data = data.map(cat => ({ ...cat, icon: mapCategoryIconByName(cat.name) }));
@@ -202,7 +202,7 @@ async function preloadData() {
     if (!_categoriesCache) tasks.push(_fetchCategoriesFromAPI());
     if (tasks.length) await Promise.all(tasks);
 }
-const API_BASE = 'https://localhost:7128/api';
+const API_BASE = 'https://besellingcleanfood0604-production.up.railway.app/api';
 
 async function loginAPI(email, password) {
     const res = await fetch(`${API_BASE}/Users/Users/Login`, {
@@ -232,7 +232,7 @@ async function signUpAPI(name, email, password, repeatPassword) {
 
 async function fetchCartFromAPI(userId) {
     try{
-        const res = await fetch(`https://localhost:7128/api/Cart/Get_List_Product_inCart?id=${userId}`);
+        const res = await fetch(`https://besellingcleanfood0604-production.up.railway.app/api/Cart/Get_List_Product_inCart?id=${userId}`);
         let list = await res.json();
         return list;
     }
