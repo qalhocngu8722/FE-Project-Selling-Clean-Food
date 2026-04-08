@@ -118,7 +118,7 @@
         if (topProducts.length > 0) {
             const productHtmlArr = topProducts.map((product, idx) => {
                 return `<div style="display:flex;align-items:center;gap:14px;padding:12px 0;${idx < topProducts.length - 1 ? 'border-bottom:1px dashed var(--border);' : ''}">
-                    <img style="width:44px;height:44px;background:var(--primary-bg);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.5rem;" src="https://localhost:7128${product.image_url}" alt="${product.name}">
+                    <img style="width:44px;height:44px;background:var(--primary-bg);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.5rem;" src="https://besellingcleanfood0604-production.up.railway.app${product.image_url}" alt="${product.name}">
                     <div style="flex:1;">
                         <div style="font-weight:600;">${product.name}</div>
                     </div>
