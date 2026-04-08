@@ -87,11 +87,11 @@
                 <div class="checkout-section animate-fadeInUp" style="animation-delay:0.15s">
                     <h3>Phương thức thanh toán</h3>
                     <div class="payment-options">
-                        <label class="payment-option active" onclick="selectPayment(this, 'COD')">
-                            <input type="radio" name="payment" value="COD" checked>
+                        <label class="payment-option active" onclick="selectPayment(this, 'Cash')">
+                            <input type="radio" name="payment" value="Cash" checked>
                             <span class="pay-icon"><i class="fa-solid fa-money-bill-wave"></i></span>
                             <div>
-                                <div class="pay-name">Thanh toán khi nhận hàng (COD)</div>
+                                <div class="pay-name">Thanh toán khi nhận hàng (Cash)</div>
                                 <div class="pay-desc">Thanh toán bằng tiền mặt khi nhận hàng</div>
                             </div>
                         </label>
@@ -110,13 +110,13 @@
                     <h3> Ghi chú đơn hàng</h3>
                     <div class="form-group" style="margin-bottom:0;">
                         <textarea id="order-note" class="form-control" rows="3"
-                                  placeholder="Ghi chú thêm cho đơn hàng (thời gian giao, yêu cầu đặc biệt...)"></textarea>
+                        placeholder="Ghi chú thêm cho đơn hàng (thời gian giao, yêu cầu đặc biệt...)"></textarea>
                     </div>
                 </div>
             </div>
 
             <div class="cart-summary animate-fadeInRight" id="order-summary">
-                <h3> Đơn hàng của bạn</h3>
+                <h3>📃 Đơn hàng của bạn</h3>
                 <div id="summary-items"></div>
                 <div id="summary-totals"></div>
                 <button class="btn btn-primary btn-lg" style="width:100%;justify-content:center;margin-top:20px;"
@@ -135,14 +135,14 @@
     <script>
         let currentUser = null;
 
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded',async () => {
             currentUser = requireAuth();
             if (!currentUser) return;
 
             document.getElementById('header-placeholder').innerHTML = renderCustomerHeader();
             document.getElementById('footer-placeholder').innerHTML = renderFooter();
 
-            const cart = getCart();
+            const cart = await fetchCartFromAPI(currentUser.id);
             if (cart.length === 0) {
                 showToast('Giỏ hàng trống! Vui lòng thêm sản phẩm.', 'warning');
                 navigateTo('cart');
@@ -197,27 +197,29 @@
             el.classList.add('active');
         }
 
-        function renderOrderSummary() {
-            const cart = getCart();
+        async function renderOrderSummary() {
+            const cart = await fetchCartFromAPI(currentUser.id);
             let subtotal = 0;
             let itemsHTML = '';
 
-            cart.forEach(item => {
-                const product = getProductById(item.product_id);
+            for (const item of cart) {
+                console.log('Đang xử lý item trong cart:', item);
+                const product = await getProductById(item.product_id);
+                console.log("product la : ",product);
                 if (!product) return;
                 const lineTotal = product.price * item.quantity;
                 subtotal += lineTotal;
 
                 itemsHTML += `
                     <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px dashed var(--border);">
-                        <span style="font-size:1.8rem;">${product.emoji || '🥬'}</span>
+                        <img style="" src="https://localhost:7128${item.image_url}" alt="Ảnh" class="summary-item-img">
                         <div style="flex:1;">
                             <div style="font-weight:600;font-size:0.9rem;">${product.name}</div>
                             <div style="font-size:0.82rem;color:var(--text-light);">x${item.quantity}</div>
                         </div>
                         <div style="font-weight:700;color:var(--accent);white-space:nowrap;">${formatPrice(lineTotal)}</div>
                     </div>`;
-            });
+            }
 
             const shippingFee = getShippingFee();
             const district = getSelectedDistrict();
@@ -228,14 +230,14 @@
             if (!district) {
                 shippingDisplay = `<span style="color:var(--text-light);font-style:italic;">Chọn quận/huyện</span>`;
             } else {
-                shippingDisplay = `<span>${formatPrice(shipping)}</span>`;
+                shippingDisplay = `<span id="shippingFee" gtri="${shipping}">${formatPrice(shipping)}</span>`;
             }
 
             document.getElementById('summary-items').innerHTML = itemsHTML;
             document.getElementById('summary-totals').innerHTML = `
                 <div class="summary-row">
                     <span>Tạm tính (${cart.reduce((s, i) => s + i.quantity, 0)} sản phẩm)</span>
-                    <span>${formatPrice(subtotal)}</span>
+                    <span id="subtotal" gtri="${subtotal}">${formatPrice(subtotal)}</span>
                 </div>
                 <div class="summary-row">
                     <span>Phí vận chuyển${district ? ` <small style="color:var(--text-light)">(${district.zone === 'inner' ? 'Nội thành' : 'Ngoại thành'})</small>` : ''}</span>
@@ -285,13 +287,10 @@
                 return;
             }
 
-            const cart = getCart();
-            let subtotal = 0;
-            cart.forEach(item => {
-                const product = getProductById(item.product_id);
-                if (product) subtotal += product.price * item.quantity;
-            });
-            const shipping = getShippingFee();
+            const cart = await fetchCartFromAPI(currentUser.id);
+            let subtotal = parseFloat(document.getElementById('subtotal').getAttribute('gtri')) || 0;
+            const shipping = parseFloat(document.getElementById('shippingFee').getAttribute('gtri')) || 0;
+            console.log('aloooo subtotal:', subtotal, 'shipping:', shipping);
             const totalAmount = subtotal + shipping;
             const fullAddress = `${address}, ${district.name}, Hà Nội`;
 
@@ -300,7 +299,7 @@
                 order_date: new Date().toISOString(),
                 total_amount: totalAmount,
                 payment_method: paymentMethod,
-                payment_status: paymentMethod === 'COD' ? 'unpaid' : 'pending',
+                payment_status: paymentMethod === 'Cash' ? 'unpaid' : 'pending',
                 order_status: 'pending',
                 shipping_address: fullAddress,
                 note: note,
@@ -309,7 +308,7 @@
                 address: fullAddress,
                 created_at: new Date().toISOString()
             };
-
+            console.log('Payload đơn hàng:', orderPayload);
             const btn = document.querySelector('.btn-primary.btn-lg');
             btn.disabled = true;
             btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang xử lý...';
@@ -322,32 +321,80 @@
                     body: JSON.stringify(orderPayload)
                 });
 
-                if (!res.ok) throw new Error('Tạo đơn hàng thất bại');
+                if (!res.ok) throw new Error('Tạo đơn hàng thất bại');                        
+                console.log("vào đây 1");
 
-                const order = await res.json();
-                localStorage.setItem('orderIdpaying', order.id);
-                localStorage.setItem('orderShipping', shipping);
-                clearCart();
+                const order = await res.text();
+                console.log('mã Đơn hàng đã tạo:', order);
 
                 if (paymentMethod === 'Banking') {
+                    console.log("vào đây 2");
+                    console.log(JSON.stringify({
+                            orderId: order,
+                            amount: totalAmount
+                        }));
                     const vnpayRes = await fetch('https://localhost:7128/api/VnPay/CreatePaymentUrl', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
-                            orderId: order.id,
-                            amount: totalAmount,
-                            orderDescription: `Thanh toan don hang #${order.id}`
+                            orderId: order,
+                            amount: totalAmount
                         })
                     });
 
                     if (!vnpayRes.ok) throw new Error('Tạo link thanh toán thất bại');
 
                     const vnpayData = await vnpayRes.json();
-                    window.location.href = vnpayData.paymentUrl || vnpayData.url || vnpayData;
+                    localStorage.setItem('orderIdpaying', order);
+                    setTimeout(() => {
+                        showToast('Chuyển đến cổng thanh toán...', 'success');
+                        window.location.href = vnpayData.paymentUrl;
+                    }, 500);
                 } else {
-                    showToast(`🎉 Đặt hàng thành công! Mã đơn #${order.id}`, 'success');
+                        // Sau khi tạo đơn hàng thành công, push toàn bộ Order_Item
+                        const orderItemsApi = 'https://localhost:7128/api/Order_Item_/AddNew';
+                        // Chuẩn bị mảng order item
+                        const detail_orders = await Promise.all(cart.map(async item => {
+                            //const product = await getProductById(item.product_id);
+                            return {
+                                order_id: order,
+                                product_id: item.product_id,
+                                quantity: item.quantity,
+                                unit_price: item ? item.price : 0
+                            };
+                        }));
+                        console.log('detail_orders la : ', detail_orders);
+        
+                        // Gửi tất cả order item lên API, chờ tất cả hoàn thành
+                        const orderItemResults = await Promise.all(detail_orders.map(async (item) => {
+                            try {
+                                const res = await fetch(orderItemsApi, {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify(item)
+                                });
+                                console.log(JSON.stringify(item));
+                                if (!res.ok) {
+                                    const errText = await res.text();
+                                    throw new Error(`Order_Item thất bại cho sản phẩm ${item.product_id}: ${errText}`);
+                                }
+                                return await res.json();
+                            } catch (err) {
+                                console.error(err);
+                                return { error: true, message: err.message, item };
+                            }
+                        }));
+                        // Kiểm tra nếu có lỗi ở bất kỳ item nào
+                        const failedItems = orderItemResults.filter(r => r && r.error);
+                        if (failedItems.length > 0) {
+                            showToast('Có lỗi khi lưu chi tiết đơn hàng. Vui lòng liên hệ hỗ trợ!', 'error');
+                            console.error('Order_Item lỗi:', failedItems);
+                        }
+                    showToast(`🎉 Đặt hàng thành công! Mã đơn #${order}`, 'success');
+                    clearCart(currentUser.id);
                     setTimeout(() => navigateTo('orders'), 1500);
                 }
+
             } catch (err) {
                 console.error('Lỗi đặt hàng:', err);
                 showToast('Đặt hàng thất bại. Vui lòng thử lại!', 'error');

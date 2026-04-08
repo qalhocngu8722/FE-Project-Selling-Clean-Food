@@ -47,43 +47,105 @@ document.addEventListener('click', (e) => {
 /* ═══════════════════════════════════════════
    CART MANAGEMENT
    ═══════════════════════════════════════════ */
-function addToCart(productId, quantity = 1) {
-    const user = getCurrentUser();
+// Biến toàn cục lưu danh sách order_item hiện tại của user
+let _currentOrderItems = [];
+
+// Hàm load order_item hiện tại của user (gọi khi login hoặc reload page)
+async function loadCurrentOrderItems(cart_id) {
+    try {
+        const res = await fetch(`https://localhost:7128/api/Cart_Item/CartItem/GetCartItemsByCartId?cartId=${cart_id}`);
+        if (res.ok) {
+            _currentOrderItems = await res.json();
+        } else {
+            _currentOrderItems = [];
+        }
+    } catch {
+        _currentOrderItems = [];
+    }
+}
+
+async function addToCart(cart_id, productId, quantity = 1) {
+    const user = localStorage.getItem('current_user') ? JSON.parse(localStorage.getItem('current_user')) : null;
+    if(user === null) {   
+        navigateTo('login');
+        return false;
+    }
+    let alo = await fetchCartFromAPI(user.id);
+    console.log('Current order items:', alo);
     if (!user) {
         sessionStorage.setItem('qal_pending_action', JSON.stringify({ action: 'addToCart', productId, quantity }));
         navigateTo('login');
         return false;
     }
-    const product = getProductById(productId);
+    const product = await getProductById(productId);
+    console.log(product);
     if (!product) return false;
-    const cart = getCart();
-    const existing = cart.find(item => item.product_id === productId);
-    if (existing) {
-        const newQty = existing.quantity + quantity;
-        if (newQty > product.quantity) {
-            showToast(`Số lượng tối đa có thể mua: ${product.quantity}`, 'warning');
-            return false;
-        }
-        existing.quantity = newQty;
-    } else {
-        if (quantity > product.quantity) {
-            showToast(`Số lượng tối đa có thể mua: ${product.quantity}`, 'warning');
-            return false;
-        }
-        cart.push({ product_id: productId, quantity, added_at: new Date().toISOString() });
+    if (!alo || !alo.length) {
+        await loadCurrentOrderItems(cart_id);
     }
-    setCart(cart);
-    updateCartBadge();
-    showToast(`Đã thêm "${product.name}" vào giỏ hàng!`);
-    return true;
+    // Kiểm tra số lượng hợp lệ
+    let cart = getCart();
+    try {
+        let res;
+        const orderItem = alo.find(item => item.product_id === productId);
+        if (orderItem) {
+            let newQty = orderItem.quantity + quantity;
+
+            if (newQty > product.quantity) {
+                showToast(`Số lượng tối đa có thể mua: ${product.quantity}`, 'warning');
+                return false;
+            }
+            // Kiểm tra order_item đã tồn tại chưa
+            console.log('orderItem order item:', orderItem);
+            console.log('Product ID:', productId);
+            // Nếu đã có, gọi API update số lượng
+            console.log(JSON.stringify({ quantity: newQty }));
+            res = await fetch(`https://localhost:7128/api/Cart_Item/CartItem/UpdateCartItem?id=${orderItem.id}&quantity=${newQty}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' }
+            });
+
+        } else {
+            // Nếu chưa có, gọi API add mới
+            res = await fetch('https://localhost:7128/api/Cart_Item/CartItem/Addnew', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    cart_id: cart_id,
+                    product_id: productId,
+                    quantity: quantity
+                })
+            });
+            console.log(JSON.stringify({
+                    cart_id: cart_id,
+                    product_id: productId,
+                    quantity: quantity
+                }));
+        }
+        setCart(cart);
+        updateCartBadge();
+        showToast(`Đã thêm "${product.name}" vào giỏ hàng!`);
+        return true;
+    } catch (err) {
+        showToast('Không thể kết nối máy chủ!', 'error');
+        return false;
+    }
 }
 
-function removeFromCart(productId) {
-    let cart = getCart();
-    cart = cart.filter(item => item.product_id !== productId);
-    setCart(cart);
-    updateCartBadge();
-    showToast('Đã xóa sản phẩm khỏi giỏ hàng', 'info');
+async function removeFromCart(productId,element_del) {
+    const del = await fetch(`https://localhost:7128/api/Cart_Item/CartItem/DeleteCartItem?id=${productId}`, {
+        method: 'DELETE'
+    });
+    if(del.ok){
+        updateCartBadge();
+        element_del.remove();
+        if(await getCartCount() === 0){
+            window.location.reload();
+        }
+        showToast('Sản phẩm đã được xóa khỏi giỏ hàng!', 'success');
+    } else {
+        showToast('Đã có lỗi xảy ra', 'error');
+    }
 }
 
 function updateCartQuantity(productId, quantity) {
@@ -104,9 +166,15 @@ function updateCartQuantity(productId, quantity) {
     updateCartBadge();
 }
 
-function clearCart() {
-    setCart([]);
-    updateCartBadge();
+async function clearCart(id) {
+    const res = await fetch(`https://localhost:7128/api/Cart_Item/CartItem/ClearAllbyUserId?userid=${id}`, {
+        method: 'DELETE'
+    });
+    if(res.ok){
+        updateCartBadge();
+    } else {
+        showToast('Có Lỗi xảy ra', 'danger');
+    }
 }
 
 function getCartTotal() {
@@ -117,13 +185,14 @@ function getCartTotal() {
     }, 0);
 }
 
-function getCartCount() {
-    return getCart().reduce((sum, item) => sum + item.quantity, 0);
+async function getCartCount() {
+    const cart = await fetchCartFromAPI(getCurrentUser().id);
+    return cart.reduce((sum, item) => sum + item.quantity, 0);
 }
 
-function updateCartBadge() {
+async function updateCartBadge() {
     const badges = document.querySelectorAll('.cart-badge');
-    const count = getCartCount();
+    const count = await getCartCount();
     badges.forEach(badge => {
         if (count > 0) {
             badge.textContent = count;
@@ -159,7 +228,7 @@ function navigateTo(page) {
         'staff-categories': base + 'staff/categories.html',
         'staff-orders': base + 'staff/orders.html',
         'staff-users': base + 'staff/users.html',
-        'admin-dashboard': base + 'admin/dashboard.html',
+        'admin-dashboard': base + 'staff/dashboard.html',
         'admin-reports': base + 'admin/reports.html',
     };
     window.location.href = routes[page] || routes['home'];
@@ -167,11 +236,13 @@ function navigateTo(page) {
 
 function navigateToProduct(productId) {
     const base = getBasePath();
-    window.location.href = base + 'customer/product-detail.html?id=' + productId;
+    localStorage.setItem('selected_detail_product_id', productId);
+    window.location.href = base + 'customer/product-detail.html';
 }
 
 function getUrlParam(name) {
     const params = new URLSearchParams(window.location.search);
+    console.log(params);
     return params.get(name);
 }
 

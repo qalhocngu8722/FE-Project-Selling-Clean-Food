@@ -3,7 +3,7 @@
    ═══════════════════════════════════════════ */
 
 function renderCustomerHeader(activePage = '') {
-    const user = getCurrentUser();
+    const user = JSON.parse(localStorage.getItem('current_user') || 'null');
     const base = getBasePath();
     const cartCount = getCartCount();
 
@@ -33,7 +33,7 @@ function renderCustomerHeader(activePage = '') {
                     <div id="userDropdown" class="user-dropdown" style="display:none;position:absolute;top:65px;right:24px;background:white;border-radius:12px;box-shadow:0 8px 30px rgba(0,0,0,0.15);padding:8px;z-index:1001;min-width:200px;">
                         <a href="${base}customer/orders.html" style="display:flex;align-items:center;gap:10px;padding:10px 16px;border-radius:8px;color:#333;font-weight:500;"><i class="fa-solid fa-box"></i> Đơn hàng của tôi</a>
                         ${user.role === 'staff' ? `<a href="${base}staff/dashboard.html" style="display:flex;align-items:center;gap:10px;padding:10px 16px;border-radius:8px;color:#333;font-weight:500;"><i class="fa-solid fa-chart-line"></i> Quản trị</a>` : ''}
-                        ${user.role === 'admin' ? `<a href="${base}admin/dashboard.html" style="display:flex;align-items:center;gap:10px;padding:10px 16px;border-radius:8px;color:#333;font-weight:500;"><i class="fa-solid fa-cog"></i> Admin Panel</a>` : ''}
+                        ${user.role === 'admin' ? `<a href="${base}staff/dashboard.html" style="display:flex;align-items:center;gap:10px;padding:10px 16px;border-radius:8px;color:#333;font-weight:500;"><i class="fa-solid fa-cog"></i> Admin Panel</a>` : ''}
                         <hr style="border:none;border-top:1px solid #eee;margin:4px 0;">
                         <a href="#" onclick="logout();window.location.href='${base}index.html'" style="display:flex;align-items:center;gap:10px;padding:10px 16px;border-radius:8px;color:#E53935;font-weight:500;"><i class="fa-solid fa-door-open"></i> Đăng xuất</a>
                     </div>
@@ -63,17 +63,17 @@ function renderFooter() {
                 <a href="${base}index.html#products">Gia vị</a>
             </div>
             <div class="footer-col">
-                <h4>Hỗ trợ</h4>
-                <a href="#">Hướng dẫn mua hàng</a>
-                <a href="#">Chính sách đổi trả</a>
-                <a href="#">Chính sách vận chuyển</a>
-                <a href="#">Câu hỏi thường gặp</a>
+                <h4>Mạng Xã Hội</h4>
+                <a href="#" target="_blank"><i class="fab fa-facebook-f"></i> Facebook</a>
+                <a href="#" target="_blank"><i class="fab fa-instagram"></i> Instagram</a>
+                <a href="#" target="_blank"><i class="fab fa-twitter"></i> Twitter</a>
+                <a href="#" target="_blank"><i class="fab fa-youtube"></i> YouTube</a>
             </div>
             <div class="footer-col">
                 <h4>Liên hệ</h4>
                 <a href="#"><i class="fa-solid fa-phone"></i> 0394783098</a>
                 <a href="#"><i class="fa-regular fa-envelope"></i> support@freshqal.vn</a>
-                <a href="#"><i class="fa-solid fa-map-marker-alt"></i> TP. Hồ Chí Minh</a>
+                <a href="#"><i class="fa-solid fa-map-marker-alt"></i> TP. Hà Nội</a>
             </div>
         </div>
         <div class="footer-bottom">
@@ -84,7 +84,7 @@ function renderFooter() {
 
 function renderSidebar(role = 'staff', activePage = '') {
     const base = getBasePath();
-    const user = getCurrentUser();
+    const user = localStorage.getItem("id_current_user");
     const isAdmin = role === 'admin';
 
     const staffLinks = [
@@ -96,7 +96,7 @@ function renderSidebar(role = 'staff', activePage = '') {
     ];
 
     const adminLinks = [
-        { icon: '<i class="fa-solid fa-chart-line"></i>', label: 'Dashboard', page: 'dashboard', href: `${base}admin/dashboard.html` },
+        { icon: '<i class="fa-solid fa-chart-line"></i>', label: 'Dashboard', page: 'dashboard', href: `${base}staff/dashboard.html` },
         { icon: '<i class="fa-solid fa-carrot"></i>', label: 'Sản phẩm', page: 'products', href: `${base}staff/products.html` },
         { icon: '<i class="fa-solid fa-folder"></i>', label: 'Danh mục', page: 'categories', href: `${base}staff/categories.html` },
         { icon: '<i class="fa-solid fa-truck"></i>', label: 'Đơn hàng', page: 'orders', href: `${base}staff/orders.html` },
@@ -144,6 +144,7 @@ function renderProductCard(product) {
     const unit = product.unit || '';
     const origin = product.origin || '';
     const food_type = product.food_type || '';
+    const current_user = localStorage.getItem('current_user') ? JSON.parse(localStorage.getItem('current_user')) : null;
     // API mới: image_url là string (related_products) hoặc mảng (chi tiết)
     let imgUrl = '';
     if (typeof product.image_url === 'string') {
@@ -154,9 +155,9 @@ function renderProductCard(product) {
     }
     const categories = Array.isArray(product.list_category_name) ? product.list_category_name : [];
     return `
-    <div class="product-card" onclick="navigateToProduct(${id})">
+    <div product-id="${id}" class="product-card" onclick="navigateToProduct(${id})">
         <div class="card-img">
-            <img src="${imgUrl}" alt="${name}" onerror="this.style.display='none'" style="max-width:100%;max-height:90px;object-fit:contain;" />
+            <img src="https://localhost:7128${imgUrl}" alt="${name}" onerror="this.style.display='none'" style="max-width:100%;object-fit:contain;" />
         </div>
         <div class="card-body">
             <div class="card-category" style="display:flex;gap:6px;flex-wrap:wrap;">
@@ -170,7 +171,7 @@ function renderProductCard(product) {
             </div>
             <div class="card-footer">
                 <div class="card-price">${formatPrice(price)} <small>/${unit}</small></div>
-                <button class="add-cart-btn" onclick="event.stopPropagation(); addToCart(${id})" title="Thêm vào giỏ">+</button>
+                <button class="add-cart-btn" onclick="event.stopPropagation(); addToCart(${current_user ? current_user.cart_id : 0}, ${id})" title="Thêm vào giỏ">+</button>
             </div>
         </div>
     </div>`;
@@ -189,6 +190,10 @@ document.addEventListener('click', (e) => {
 });
 
 function handleGlobalSearch(keyword) {
+    if(keyword.length == 0) {
+        window.location.href = getBasePath() + 'index.html';
+        return;
+    }
     if (keyword.trim()) {
         const base = getBasePath();
         window.location.href = base + 'index.html?search=' + encodeURIComponent(keyword.trim());

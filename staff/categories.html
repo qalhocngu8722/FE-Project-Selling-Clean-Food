@@ -13,7 +13,7 @@
         <div id="sidebarContainer"></div>
         <div class="main-content">
             <div class="topbar">
-                <h2><i class="fa-solid fa-folder"></i> Quản lý danh mục</h2>
+                <h2><span style="color: #1565c0; background-color: #e3f2fd; padding: 6px 10px; border-radius: 6px; display: inline-flex; align-items: center; margin-right: 8px;"><i class="fa-solid fa-folder"></i></span> Quản lý danh mục</h2>
                 <div class="topbar-actions">
                     <button class="btn btn-primary btn-sm" onclick="openAddCategory()"><i class="fa-solid fa-plus"></i> Thêm danh mục</button>
                 </div>
@@ -55,29 +55,12 @@
                     <textarea class="form-control" id="fDesc" rows="3" placeholder="Mô tả danh mục"></textarea>
                 </div>
                 <div class="form-group">
-                    <label>Icon (Emoji)</label>
-                    <select class="form-control" id="fIcon">
-                        <option value="🥬">🥬 Rau lá</option>
-                        <option value="🥕">🥕 Củ quả</option>
-                        <option value="🍎">🍎 Trái cây</option>
-                        <option value="🍄">🍄 Nấm</option>
-                        <option value="🌿">🌿 Rau gia vị</option>
-                        <option value="🥦">🥦 Bông cải</option>
-                        <option value="🌽">🌽 Ngô</option>
-                        <option value="🥒">🥒 Dưa leo</option>
-                        <option value="🍅">🍅 Cà chua</option>
-                        <option value="🫑">🫑 Ớt chuông</option>
-                        <option value="🧄">🧄 Tỏi</option>
-                        <option value="🥜">🥜 Đậu</option>
-                        <option value="🫘">🫘 Hạt</option>
-                        <option value="🥑">🥑 Bơ</option>
-                        <option value="🍋">🍋 Chanh</option>
-                    </select>
+
                 </div>
             </div>
             <div class="modal-footer">
                 <button class="btn btn-ghost" onclick="closeModal('categoryModal')">Hủy</button>
-                <button class="btn btn-primary" onclick="saveCategory()">Lưu danh mục</button>
+                <button class="btn btn-primary" onclick="saveCategory(document.getElementById('modalTitle').textContent.includes('Sửa') ? document.getElementById('editId').value : null)">Lưu danh mục</button>
             </div>
         </div>
     </div>
@@ -90,22 +73,22 @@
         const user = requireRole(['staff', 'admin']);
         if (!user) return;
         await preloadData();
-        document.getElementById('sidebarContainer').innerHTML = renderSidebar('staff', 'categories');
+        let qal = localStorage.getItem("id_current_user");
+        let qal1 =  await getUserById(qal);
+        document.getElementById('sidebarContainer').innerHTML = renderSidebar(qal1.role, 'categories');
         renderCategories();
     })();
 
-    function renderCategories() {
+    async function renderCategories() {
         const categories = getCategories();
-        const products = getProducts();
+        const products = await getProducts();
         document.getElementById('categoryTableBody').innerHTML = categories.length
             ? categories.map(c => {
                 const productCount = products.filter(p => p.category_id === c.id).length;
                 return `<tr>
                     <td><strong>${c.id}</strong></td>
-                    <td style="font-size:1.8rem;">${c.icon}</td>
                     <td><strong>${c.name}</strong></td>
                     <td style="color:var(--text-secondary);">${c.description}</td>
-                    <td><span style="background:var(--primary-bg);color:var(--primary);padding:4px 12px;border-radius:20px;font-weight:700;font-size:0.85rem;">${productCount} sản phẩm</span></td>
                     <td>
                         <div class="table-actions">
                             <button class="btn-edit" onclick="editCategory(${c.id})" title="Sửa"><i class="fa-solid fa-pen"></i></button>
@@ -122,7 +105,6 @@
         document.getElementById('editId').value = '';
         document.getElementById('fName').value = '';
         document.getElementById('fDesc').value = '';
-        document.getElementById('fIcon').value = '🥬';
         openModal('categoryModal');
     }
 
@@ -133,54 +115,120 @@
         document.getElementById('editId').value = c.id;
         document.getElementById('fName').value = c.name;
         document.getElementById('fDesc').value = c.description;
-        document.getElementById('fIcon').value = c.icon;
         openModal('categoryModal');
     }
 
-    function saveCategory() {
+    async function saveCategory(editId = null) {
         const name = document.getElementById('fName').value.trim();
-        if (!name) { showToast('Vui lòng nhập tên danh mục!', 'error'); return; }
+        const description = document.getElementById('fDesc').value.trim();
 
-        const categories = getCategories();
-        const editId = document.getElementById('editId').value;
-        const catData = {
-            name: name,
-            description: document.getElementById('fDesc').value.trim(),
-            icon: document.getElementById('fIcon').value
-        };
-
-        if (editId) {
-            const idx = categories.findIndex(c => c.id === parseInt(editId));
-            if (idx !== -1) {
-                categories[idx] = { ...categories[idx], ...catData };
-                setCategories(categories);
-                showToast('Cập nhật danh mục thành công!');
-            }
-        } else {
-            const maxId = categories.length ? Math.max(...categories.map(c => c.id)) : 0;
-            catData.id = maxId + 1;
-            categories.push(catData);
-            setCategories(categories);
-            showToast('Thêm danh mục mới thành công!');
+        if (!name) {
+            showToast('Vui lòng nhập tên danh mục!', 'error');
+            return;
         }
 
-        closeModal('categoryModal');
-        renderCategories();
+        const body = {
+            name,
+            description
+        };
+
+        const isEdit = editId !== null;
+
+        const url = isEdit
+            ? `https://localhost:7128/api/DanhMucSP/ProductCategory/UpdateProductCategory?id=${editId}`
+            : 'https://localhost:7128/api/DanhMucSP/ProductCategory/Addnew';
+        console.log("url la : ",url);
+        const method = isEdit ? 'PUT' : 'POST';
+
+        const successMsg = isEdit
+            ? 'Cập nhật danh mục thành công!'
+            : 'Thêm danh mục mới thành công!';
+
+        try {
+            const res = await fetch(url, {
+                method,
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(body)
+            });
+
+            if (!res.ok) {
+                const err = await res.text();
+                showToast(`Lỗi: ${err || res.status}`, 'error');
+                return;
+            }
+
+            if(method === 'POST') {
+                const idnew = await res.json();
+                document.getElementById('categoryTableBody').insertAdjacentHTML('beforeend', `<tr>
+                    <td><strong>${idnew}</strong></td>
+                    <td><strong>${name}</strong></td>
+                    <td style="color:var(--text-secondary);">${description}</td>
+                    <td>
+                        <div class="table-actions">
+                            <button class="btn-edit" onclick="editCategory(${idnew})" title="Sửa"><i class="fa-solid fa-pen"></i></button>
+                            <button class="btn-delete" onclick="deleteCategory(${idnew})" title="Xóa"><i class="fa-solid fa-trash"></i></button>
+                        </div>
+                    </td>
+                </tr>`);
+
+            } else {
+                document.querySelectorAll('#categoryTableBody tr').forEach(row => {
+                    const idCell = row.querySelector('td:first-child strong');
+                    if (idCell && idCell.textContent == editId) {
+                        row.children[1].querySelector('strong').textContent = name;
+                        row.children[2].textContent = description;
+                    }
+                });
+            }
+            showToast(successMsg, 'success');
+
+            closeModal('categoryModal');
+
+            // Luôn load lại dữ liệu thật từ backend
+            // await renderCategories();
+
+        } catch (e) {
+            console.error(e);
+            showToast('Có lỗi xảy ra khi kết nối API!', 'error');
+        }
     }
 
-    function deleteCategory(id) {
+    async function deleteCategory(id) {
         const c = getCategoryById(id);
         if (!c) return;
-        const productCount = getProducts().filter(p => p.category_id === id).length;
+        const productCount = await getProducts().then(products => products.filter(p => p.category_id === id).length);
         if (productCount > 0) {
             showToast(`Không thể xóa! Danh mục "${c.name}" đang có ${productCount} sản phẩm.`, 'error');
             return;
         }
         if (!confirm(`Bạn có chắc muốn xóa danh mục "${c.name}"?`)) return;
-        const categories = getCategories().filter(cat => cat.id !== id);
-        setCategories(categories);
-        showToast('Đã xóa danh mục!', 'info');
-        renderCategories();
+
+        try {
+            const res = await fetch(`https://localhost:7128/api/DanhMucSP/ProductCategory/DeleteProductCategory?id=${id}`, {
+                method: 'DELETE',
+            });
+            if (!res.ok) {
+                const err = await res.text();
+                showToast('Lỗi xóa danh mục: ' + (err || res.status), 'error');
+                return;
+            }
+            showToast('Đã xóa danh mục!', 'success');
+
+            // Xóa element khỏi FE không reload lại trang
+            const tableBody = document.getElementById('categoryTableBody');
+            const rows = tableBody.querySelectorAll('tr');
+            for (const row of rows) {
+                const idCell = row.querySelector('td:first-child strong');
+                if (idCell && idCell.textContent == id) {
+                    tableBody.removeChild(row);
+                    break;
+                }
+            }
+        } catch (e) {
+            showToast('Có lỗi xảy ra khi kết nối API!', 'error');
+        }
     }
     </script>
 </body>

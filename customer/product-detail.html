@@ -80,20 +80,21 @@
         let relatedProducts = [];
 
         document.addEventListener('DOMContentLoaded', async () => {
-            const productId = getUrlParam('id');
+            const productId = localStorage.getItem('selected_detail_product_id');
+            console.log('Product ID from URL:', productId);
             if (!productId) {
                 navigateTo('home');
                 return;
             }
             try {
-                const res = await fetch(`https://localhost:5267/api/SanPham/Get_Detail_Product_With_Related?id=${productId}`);
+                const res = await fetch(`https://localhost:7128/api/SanPham/Get_Detail_Product_With_Related?id=${productId}`);
                 if (!res.ok) throw new Error('API error');
                 const data = await res.json();
                 currentProduct = data;
                 relatedProducts = Array.isArray(data.related_products) ? data.related_products : [];
             } catch (e) {
                 showToast('Không thể tải dữ liệu sản phẩm!', 'error');
-                navigateTo('home');
+                // navigateTo('home');
                 return;
             }
 
@@ -118,12 +119,12 @@
             const images = Array.isArray(p.image_url) ? p.image_url : [];
             let mainImg = images.find(img => img.is_primary) || images[0];
             let mainImgUrl = mainImg ? mainImg.image_url : '';
-            document.getElementById('pd-main-image').innerHTML = mainImgUrl ? `<img src="${mainImgUrl}" alt="${p.name}" style="max-width:100%;max-height:220px;object-fit:contain;" />` : '<span>🥬</span>';
+            document.getElementById('pd-main-image').innerHTML = mainImgUrl ? `<img src="https://localhost:7128${mainImgUrl}" alt="${p.name}" style="max-width:100%;object-fit:contain;" />` : '<span>🥬</span>';
 
             // Thumbnails
             document.getElementById('pd-thumbnails').innerHTML = images.map((img, i) => `
-                <div class="pd-thumb ${img.is_primary ? 'active' : ''}" onclick="changeMainImage('${img.image_url}', this)">
-                    <img src="${img.image_url}" alt="thumb" style="width:48px;height:48px;object-fit:contain;border-radius:8px;" />
+                <div class="pd-thumb ${img.is_primary ? 'active' : ''}" onclick="changeMainImage('https://localhost:7128${img.image_url}', this)">
+                    <img src="https://localhost:7128${img.image_url}" alt="thumb" style="width:48px;height:48px;object-fit:contain;border-radius:8px;" />
                 </div>
             `).join('');
 
@@ -151,7 +152,7 @@
         }
 
         function changeMainImage(imgUrl, el) {
-            document.getElementById('pd-main-image').innerHTML = `<img src="${imgUrl}" alt="main" style="animation:scaleIn 0.3s ease;max-width:100%;max-height:220px;object-fit:contain;" />`;
+            document.getElementById('pd-main-image').innerHTML = `<img src="${imgUrl}" alt="main" style="animation:scaleIn 0.3s ease;max-width:100%;object-fit:contain;" />`;
             document.querySelectorAll('.pd-thumb').forEach(t => t.classList.remove('active'));
             el.classList.add('active');
         }
@@ -176,14 +177,25 @@
         }
 
         function handleAddToCart() {
+            const current_user = localStorage.getItem('current_user') ? JSON.parse(localStorage.getItem('current_user')) : null;
             const qty = parseInt(document.getElementById('qty-input').value);
-            addToCart(currentProduct.id, qty);
+            if(current_user){
+                addToCart(current_user.cart_id, currentProduct.id, qty);
+            }
+            else{
+                navigateTo('login');
+            }
         }
 
         function handleBuyNow() {
+            const current_user = localStorage.getItem('current_user') ? JSON.parse(localStorage.getItem('current_user')) : null;
             const qty = parseInt(document.getElementById('qty-input').value);
-            if (addToCart(currentProduct.id, qty)) {
+            if(current_user){
+                addToCart(current_user.cart_id, currentProduct.id, qty);
                 navigateTo('checkout');
+            }
+            else{
+                navigateTo('login');
             }
         }
 

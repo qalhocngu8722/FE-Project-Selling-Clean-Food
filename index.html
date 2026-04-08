@@ -19,8 +19,8 @@
             <h1>Rau Củ Quả <span class="highlight">Tươi Sạch</span> Mỗi Ngày</h1>
             <p class="hero-subtitle">Nông sản hữu cơ, được tuyển chọn kỹ lưỡng từ các trang trại uy tín. Giao hàng tận nơi trong ngày, đảm bảo tươi ngon cho bữa ăn gia đình bạn.</p>
             <div class="hero-buttons">
-                <a href="#products" class="btn btn-primary btn-lg">Mua sắm ngay</a>
-                <a href="#features" class="btn btn-outline btn-lg">Tìm hiểu thêm</a>
+                <a href="#products" class="btn btn-primary btn-lg"><i class="fa-solid fa-bag-shopping"></i> Mua sắm ngay</a>
+                <a href="#features" class="btn btn-outline btn-lg"><i class="fa-solid fa-book"></i> Tìm hiểu thêm</a>
             </div>
             <div class="hero-stats">
                 <div class="stat-item">
@@ -134,14 +134,33 @@
     </div>
 </section>
 
+<section class="section reveal" id="mymap">
+  <div class="shop-location-card">
+    <div class="shop-map-info">
+      <div class="shop-map-title">
+        <span class="map-pin-animate">🗺️</span>
+        <h2>Vị trí Shop</h2>
+      </div>
+      <div class="shop-contact">
+        <div><i class="fa-solid fa-map-marker-alt"></i> 31 P. Dịch Vọng Hậu, Dịch Vọng Hậu, Cầu Giấy, Hà Nội, Việt Nam</div>
+        <div><i class="fa-solid fa-phone"></i> 0394 123 456</div>
+        <div><i class="fa-solid fa-clock"></i> 7:00 - 18:00 (T2-CN)</div>
+      </div>
+    </div>
+    <div class="shop-map-iframe">
+      <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3214.8744264963193!2d105.78445077448107!3d21.03198398766933!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3135abe7af0fb3cf%3A0xded19d6054a4f99d!2zVHLGsOG7nW5nIMSQ4bqhaSBo4buNYyBUw6BpIGNow61uaCAtIE5nw6JuIGjDoG5nIEjDoCBO4buZaQ!5e1!3m2!1svi!2s!4v1775024211587!5m2!1svi!2s"
+        width="100%" height="320" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+    </div>
+  </div>
+</section>
 <!-- CTA Banner -->
 <section class="cta-banner reveal">
     <div class="container">
         <div class="cta-content">
-            <h2>Đăng ký nhận ưu đãi (kiểm tra nếu người dùng đã đăng nhập thì ẩn đi container này)</h2>
+            <h2>Đăng ký nhận ưu đãi lớn từ chúng tôi</h2>
             <p>Nhận ngay voucher giảm giá cho đơn hàng đầu tiên và cập nhật khuyến mãi hàng tuần.</p>
             <form class="cta-form" onsubmit="event.preventDefault(); redirect_register();">
-                <button type="submit" class="btn btn-primary btn-lg">Đăng ký Ngay</button>
+                <button type="submit" class="btn btn-primary btn-lg"><i class="fa-brands fa-bilibili"></i>  Đăng ký Ngay</button>
             </form>
         </div>
     </div>
@@ -154,9 +173,20 @@
 <script src="js/app.js"></script>
 <script src="js/components.js"></script>
 <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        console.log(localStorage.getItem('current_user') === null);
+        let banner = document.querySelector('.cta-banner');
+        if (localStorage.getItem('current_user') !== null) {
+            banner.style.display = 'none';
+        } else {
+            banner.style.display = 'block';
+        }
+    });
     const PRODUCTS_PER_PAGE = 8;
     let showAll = false;
     let activeCategory = '';
+    var current_user = JSON.parse(localStorage.getItem('current_user'));
+    // console.log(current_user);
 
     document.getElementById('header').innerHTML = renderCustomerHeader('home');
     document.getElementById('footer').innerHTML = renderFooter();
@@ -167,7 +197,7 @@
         console.log('Categories:', categories);
         const grid = document.getElementById('categoryGrid');
         grid.innerHTML = categories.map(cat => `
-            <div id="${cat.id}" class="category-card ${activeCategory == cat.id ? 'active' : ''}" onclick="selectCategory(${cat.id})">
+            <div id="${cat.id}" class="category-card ${activeCategory == cat.id ? 'active' : ''}" onclick="selectCategory('${cat.name}')">
                 <div class="category-icon">${cat.icon ? cat.icon : '<i class=\'fa-solid fa-leaf\'></i>'}</div>
                 <h4>${cat.name}</h4>
                 <p>${cat.description}</p>
@@ -188,6 +218,7 @@
 
     /* ── Products ── */
     async function filterProducts() {
+        console.log(activeCategory);
         const keyword = getUrlParam('search') || '';
         const categoryId = document.getElementById('filterCategory').value || activeCategory;
         const sort = document.getElementById('filterSort').value;
@@ -199,20 +230,23 @@
         if (sort) filters.sort = sort;
         if (minPrice) filters.min_price = minPrice;
         if (maxPrice) filters.max_price = maxPrice;
+        console.log('Filters:', filters);
 
-        let products = await getProducts();
+        let products = await _fetchProductsFromAPI();
         // Lọc theo keyword
         if (keyword) {
             const kw = keyword.toLowerCase();
+            console.log(kw);
             products = products.filter(p =>
                 p.product_name.toLowerCase().includes(kw) ||
-                p.description.toLowerCase().includes(kw) ||
+                p.food_type.toLowerCase().includes(kw) ||
                 p.origin.toLowerCase().includes(kw)
             );
         }
         // Lọc theo category
         if (filters.category_id) {
-            products = products.filter(p => p.category_id === parseInt(filters.category_id));
+            console.log("Vào đây ", products);
+            products = products.filter(p => p.list_category_name.includes(filters.category_id));
         }
         // Lọc theo giá
         if (filters.min_price) {
@@ -230,10 +264,11 @@
             switch (filters.sort) {
                 case 'price_asc': products.sort((a, b) => a.price - b.price); break;
                 case 'price_desc': products.sort((a, b) => b.price - a.price); break;
-                case 'name_asc': products.sort((a, b) => a.name.localeCompare(b.name)); break;
+                case 'name_asc': products.sort((a, b) => a.product_name.localeCompare(b.product_name)); break;
                 case 'newest': products.sort((a, b) => b.id - a.id); break;
             }
         }
+        console.log('Filtered products:', products);
         renderProductGrid(products);
     }
 
@@ -263,7 +298,7 @@
         const catSelect = document.getElementById('filterCategory');
         categories.forEach(cat => {
             const opt = document.createElement('option');
-            opt.value = cat.id;
+            opt.value = cat.name;
             opt.textContent = cat.name;
             catSelect.appendChild(opt);
         });

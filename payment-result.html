@@ -118,7 +118,7 @@
     <p class="sub">Đơn hàng của bạn đã được xác nhận và sẽ sớm giao đến bạn.<br/>Cảm ơn bạn đã mua hàng.</p>
     <div class="info-table" id="info-success"></div>
     <a href="index.html" class="btn btn-primary">Về trang chủ</a>
-    <a href="orders.html" class="btn btn-outline">Đơn hàng của tôi</a>
+    <a href="customer/orders.html" class="btn btn-outline">Đơn hàng của tôi</a>
   </div>
 
   <!-- FAIL STATE -->
@@ -132,7 +132,9 @@
   </div>
 
 </div>
-
+<script src="../js/data.js"></script>
+<script src="../js/components.js"></script>
+<script src="../js/app.js"></script>
 <script>
   const BE_URL = 'https://localhost:7128';
 
@@ -169,7 +171,7 @@
       </div>`).join('');
   }
 
-  function showSuccess(params, verifyData) {
+  async function showSuccess(params, verifyData) {
     document.getElementById('state-loading').classList.add('hidden');
     document.getElementById('state-success').classList.remove('hidden');
 
@@ -178,7 +180,50 @@
       res[key] = value;
       return res;
     }, {});
+    console.log(localStorage.getItem("orderIdpaying"));
     let orderIdpaying = localStorage.getItem("orderIdpaying");
+
+    // _______ Thêm order item sau khi thanh toán thành công _______
+    const cart = await fetchCartFromAPI(localStorage.getItem('id_current_user'));
+    const orderItemsApi = 'https://localhost:7128/api/Order_Item_/AddNew';
+    // Chuẩn bị mảng order item
+    const detail_orders = await Promise.all(cart.map(async item => {
+        return {
+            order_id: orderIdpaying,
+            product_id: item.product_id,
+            quantity: item.quantity,
+            unit_price: item ? item.price : 0
+        };
+    }));
+    console.log('detail_orders la : ', detail_orders);
+
+    // Gửi tất cả order item lên API, chờ tất cả hoàn thành
+    const orderItemResults = await Promise.all(detail_orders.map(async (item) => {
+        try {
+            const res = await fetch(orderItemsApi, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(item)
+            });
+            console.log(JSON.stringify(item));
+            if (!res.ok) {
+                const errText = await res.text();
+                throw new Error(`Order_Item thất bại cho sản phẩm ${item.product_id}: ${errText}`);
+            }
+            return await res.json();
+        } catch (err) {
+            console.error(err);
+            return { error: true, message: err.message, item };
+        }
+    }));
+    // Kiểm tra nếu có lỗi ở bất kỳ item nào
+    const failedItems = orderItemResults.filter(r => r && r.error);
+    if (failedItems.length > 0) {
+        showToast('Có lỗi khi lưu chi tiết đơn hàng. Vui lòng liên hệ hỗ trợ!', 'error');
+        console.error('Order_Item lỗi:', failedItems);
+    } else {
+        console.log('Tất cả Order_Item đã được lưu thành công.');
+    }
 
     Promise.all([
       fetch(`${BE_URL}/api/payments/paymenttransaction/addnew`, {
@@ -193,14 +238,16 @@
           paid_at: new Date().toISOString()
         })
       }),
-      fetch(`${BE_URL}/api/Orders/Orders/UpdateOrder?id=${orderIdpaying}`, {
+      fetch(`https://localhost:7128/api/Orders/Update_status_order?orderId=${orderIdpaying}&payment_status=resolve&order_status=pending`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          order_status: 'approve'
-        })
+        headers: { 'Content-Type': 'application/json' }
       })
     ]).then(([payRes, orderRes]) => {
+      const userid = localStorage.getItem('id_current_user')
+      console.log('Clearing cart for user:', userid);
+
+      console.log('Clearing cart for user:', userid);
+      clearCart(userid);
       console.log('Payment transaction saved:', payRes.ok);
       console.log('Order status updated:', orderRes.ok);
     }).catch(err => {
@@ -278,7 +325,7 @@
       });
 
       const data = await res.json();
-
+      console.log('BE verify response:', data);
       if (data.success) {
         showSuccess(params, data);
         

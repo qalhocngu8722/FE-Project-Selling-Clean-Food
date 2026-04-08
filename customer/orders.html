@@ -72,6 +72,7 @@
                             payment_status: item.payment_status,
                             order_status: item.order_status,
                             order_date: item.order_date,
+                            total_amount: item.total_amount,
                             items: []
                         };
                     }
@@ -107,7 +108,7 @@
             if (currentFilter !== 'all') {
                 orders = orders.filter(o => o.order_status === currentFilter);
             }
-
+            console.log(orders);
             if (orders.length === 0) {
                 document.getElementById('orders-list').innerHTML = `
                     <div class="empty-state animate-fadeInUp">
@@ -133,7 +134,7 @@
                         <div class="order-item">
                             <div class="order-item-img">
                                 ${imgSrc
-                                    ? `<img src="${imgSrc}" alt="${item.name}" style="width:40px;height:40px;object-fit:cover;border-radius:8px;" onerror="this.outerHTML='<i class=\\'fa-solid fa-leaf\\' style=\\'font-size:1.5rem;color:var(--accent)\\'></i>'">`
+                                    ? `<img src="https://localhost:7128${imgSrc}" alt="${item.name}" style="width:40px;height:40px;object-fit:cover;border-radius:8px;" onerror="this.outerHTML='<i class=\\'fa-solid fa-leaf\\' style=\\'font-size:1.5rem;color:var(--accent)\\'></i>'">`
                                     : '<i class="fa-solid fa-leaf" style="font-size:1.5rem;color:var(--accent)"></i>'}
                             </div>
                             <span class="order-item-name">${item.name}</span>
@@ -156,7 +157,7 @@
                     <div class="order-body">${itemsHTML}</div>
                     <div class="order-footer">
                         <div class="order-total">
-                            Tổng: <span>${formatPrice(totalAmount)}</span>
+                            Tổng: <span>${formatPrice(order.total_amount)}</span>
                         </div>
                         <div style="display:flex;gap:10px;align-items:center;">
                             <span style="font-size:0.85rem;color:var(--text-light);">

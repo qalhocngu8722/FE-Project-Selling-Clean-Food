@@ -148,17 +148,21 @@ async function _fetchProductsFromAPI() {
         const res = await fetch('https://localhost:7128/api/SanPham/Get_List_Product_homepage');
         if (!res.ok) throw new Error('HTTP ' + res.status);
         const data = await res.json();
-        _productsCache = data;
-        localStorage.setItem('qal_products', JSON.stringify(data));
+        return data;
     } catch (e) {
         console.warn('Lấy sản phẩm từ API thất bại, dùng dữ liệu cục bộ:', e.message);
         _productsCache = JSON.parse(localStorage.getItem('qal_products') || '[]');
     }
 }
 
-function getProducts() {
-    if (_productsCache) return _productsCache;
-    return JSON.parse(localStorage.getItem('qal_products') || '[]');
+async function getProducts() {
+    let listproducts = await fetch(`https://localhost:7128/api/SanPham/GetAllSanPham`);
+    if (listproducts.ok) {
+        const data = await listproducts.json();
+        _productsCache = data;
+        return _productsCache;
+    }
+    return [];
 }
 function setProducts(data) {
     _productsCache = data;
@@ -227,9 +231,14 @@ async function signUpAPI(name, email, password, repeatPassword) {
 }
 
 async function fetchCartFromAPI(userId) {
-    const res = await fetch(`${API_BASE}/Cart/Get_List_Product_inCart?id=${userId}`);
-    if (!res.ok) throw new Error('Fetch cart failed');
-    return await res.json();
+    try{
+        const res = await fetch(`https://localhost:7128/api/Cart/Get_List_Product_inCart?id=${userId}`);
+        let list = await res.json();
+        return list;
+    }
+    catch(e){
+        return [];
+    }
 }
 
 async function fetchOrdersFromAPI(userId) {
@@ -238,23 +247,57 @@ async function fetchOrdersFromAPI(userId) {
     return await res.json();
 }
 
-function getUsers() { return JSON.parse(localStorage.getItem('qal_users') || '[]'); }
+async function getUsers() { 
+    let listuser = await fetch(`${API_BASE}/Users/Users/Getall`);
+    if (listuser.ok) {
+        const data = await listuser.json();
+        console.log('Fetched users from API:', data);
+        return data;
+    }
+    return [];
+}
+
 function setUsers(data) { localStorage.setItem('qal_users', JSON.stringify(data)); }
-function getOrders() { return JSON.parse(localStorage.getItem('qal_orders') || '[]'); }
-function setOrders(data) { localStorage.setItem('qal_orders', JSON.stringify(data)); }
+async function getOrders() { 
+    let listorders = await fetch(`${API_BASE}/Orders/ListDetailOrder_Staff`);
+    if (listorders.ok) {
+        const data = await listorders.json();
+        console.log('Fetched orders from API:', data);
+        return data;
+    }
+    return [];
+}
+async function setOrders(data) { 
+    try {
+        const res = await fetch(`${API_BASE}/Orders/Orders/Create`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+        if (!res.ok) {
+            const errText = await res.text().catch(() => '');
+            throw new Error(errText || 'Set orders failed');
+        }
+        return await res.json();
+    } catch (error) {
+        console.error('Error setting orders:', error);
+        throw error;
+    }
+}
+
 function getCart() { return JSON.parse(localStorage.getItem('qal_cart') || '[]'); }
 function setCart(data) { localStorage.setItem('qal_cart', JSON.stringify(data)); }
 function getCurrentUser() { return JSON.parse(localStorage.getItem('qal_current_user') || 'null'); }
 function setCurrentUser(user) { localStorage.setItem('qal_current_user', JSON.stringify(user)); }
-function logout() { localStorage.removeItem('qal_current_user'); }
+function logout() { localStorage.removeItem('current_user'); }
 
-function getProductById(id) {
-    return getProducts().find(p => p.id === parseInt(id));
+async function getProductById(id) {
+    return (await getProducts()).find(p => p.id === parseInt(id));
 }
 function getCategoryById(id) {
     return getCategories().find(c => c.id === parseInt(id));
 }
-function getUserById(id) { return getUsers().find(u => u.id === parseInt(id)); }
+async function getUserById(id) { return (await getUsers()).find(u => u.id === parseInt(id)); }
 
 function getNextOrderId() {
     const id = parseInt(localStorage.getItem('qal_next_order_id') || '1004');
@@ -287,7 +330,7 @@ function getOrderStatusText(status) {
 }
 
 function getPaymentStatusText(status) {
-    const map = { unpaid: 'Chưa thanh toán', paid: 'Đã thanh toán', pending: 'Đang xử lý', resolve: 'Thành công', reject: 'Thất bại' };
+    const map = { unpaid: 'Chưa thanh toán', paid: 'Đã thanh toán', pending: 'Chưa Thanh Toán', resolve: 'Đã Thanh Toán', reject: 'Thanh Toán Thất bại' };
     return map[status] || status;
 }
 

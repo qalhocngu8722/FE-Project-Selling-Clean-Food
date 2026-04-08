@@ -11,9 +11,9 @@
 <body>
     <div class="admin-layout" id="app">
         <div id="sidebarContainer"></div>
-        <div class="main-content">
+        <div class="main-content">  
             <div class="topbar">
-                <h2><i class="fa-solid fa-box"></i> Quản lý sản phẩm</h2>
+                <h2><span style="color: #d7ba00; background-color: #fff5c2; padding: 6px 10px; border-radius: 6px; display: inline-flex; align-items: center; margin-right: 8px;"><i class="fa-solid fa-carrot"></i></span>  Quản lý sản phẩm</h2>
                 <div class="topbar-actions">
                     <button class="btn btn-primary btn-sm" onclick="openAddProduct()"><i class="fa-solid fa-plus"></i> Thêm sản phẩm</button>
                 </div>
@@ -29,8 +29,8 @@
                 <table class="data-table">
                     <thead>
                         <tr>
-                            <th>ID</th>
-                            <th>Emoji</th>
+                            <th style="padding-left: 16px;">ID</th>
+                            <th>Hình Ảnh</th>
                             <th>Tên sản phẩm</th>
                             <th>Danh mục</th>
                             <th>Đơn vị tính</th>
@@ -100,7 +100,7 @@
                         <input type="number" class="form-control" id="fQuantity" placeholder="0">
                     </div>
                     <div class="form-group">
-                        <label>Quy cách</label>
+                        <label>Kích thước</label>
                         <input type="text" class="form-control" id="fSize" placeholder="1kg, 500g...">
                     </div>
                 </div>
@@ -112,39 +112,32 @@
                     <label>Hướng dẫn bảo quản</label>
                     <input type="text" class="form-control" id="fStorage" placeholder="Cách bảo quản...">
                 </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Emoji</label>
-                        <select class="form-control" id="fEmoji">
-                            <option value="🥬">🥬 Rau xanh</option>
-                            <option value="🥕">🥕 Cà rốt</option>
-                            <option value="🥔">🥔 Khoai tây</option>
-                            <option value="🍠">🍠 Khoai lang</option>
-                            <option value="🥗">🥗 Salad</option>
-                            <option value="🍎">🍎 Táo</option>
-                            <option value="🍊">🍊 Cam</option>
-                            <option value="🍌">🍌 Chuối</option>
-                            <option value="🍉">🍉 Dưa hấu</option>
-                            <option value="🍇">🍇 Nho</option>
-                            <option value="🍄">🍄 Nấm</option>
-                            <option value="🌿">🌿 Rau thơm</option>
-                            <option value="🧅">🧅 Hành</option>
-                            <option value="🌶️">🌶️ Ớt</option>
-                            <option value="🫚">🫚 Gừng</option>
-                            <option value="🎃">🎃 Bí đỏ</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Badge</label>
-                        <select class="form-control" id="fBadge">
-                            <option value="">Không có</option>
-                            <option value="new">Mới</option>
-                            <option value="hot">Hot</option>
-                            <option value="sale">Sale</option>
-                        </select>
+                <div class="form-group">
+                    <label>Hạn sử dụng</label>
+                    <input type="date" class="form-control" id="fHSD" placeholder="Chọn hạn sử dụng">
+                </div>
+                <!-- Ảnh chính -->
+                <div class="form-group">
+                    <label><i class="fa-solid fa-star"></i> Ảnh chính sản phẩm</label>
+                    <div id="mainImageEditor" style="display: flex; align-items: center; gap: 16px; margin-bottom: 8px;">
+                        <img id="mainProductImage" src="" alt="Tải lên ảnh đại diện của sp" style="width: 90px; height: 90px; object-fit: cover; border-radius: 6px; border: 1px solid #ddd; background: #fafafa;">
+                        <input type="file" id="mainImageInput" accept="image/*" style="flex: 1;" onchange="changeMainProductImage(event)">
                     </div>
                 </div>
-            </div>
+
+                <hr style="margin: 20px 0; border: none; border-top: 1px solid #eee;">
+                <!-- Ảnh phụ -->
+                <div class="form-group">
+                    <label><i class="fa-solid fa-image"></i> Quản lý ảnh phụ</label>
+                    <div style="border: 1px solid #ddd; border-radius: 8px; padding: 12px; margin-bottom: 12px;">
+                        <div id="productImagesContainer" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 8px; margin-bottom: 12px;"></div>
+                        <div style="display: flex; gap: 8px;">
+                            <input type="file" id="uploadImageInput" accept="image/*" style="flex: 1;" placeholder="Chọn ảnh...">
+                            <button type="button" class="btn btn-primary btn-sm" onclick="uploadProductImage()" style="white-space: nowrap;"><i class="fa-solid fa-upload"></i> Upload</button>
+                        </div>
+                    </div>
+                </div>
+            </hr>
             <div class="modal-footer">
                 <button class="btn btn-ghost" onclick="closeModal('productModal')">Hủy</button>
                 <button class="btn btn-primary" onclick="saveProduct()">Lưu sản phẩm</button>
@@ -156,95 +149,188 @@
     <script src="../js/components.js"></script>
     <script src="../js/app.js"></script>
     <script>
+    // ========== GLOBAL VARIABLES ==========
+    let _productsDataCache = [];
+    let _currentProductImages = [];
+    const API_STAFF_PRODUCTS = 'https://localhost:7128/api/SanPham/Get_list_product_staff_interface';
+
+    // ========== INITIALIZATION ==========
     (async function initPage() {
         const user = requireRole(['staff', 'admin']);
         if (!user) return;
-        await preloadData();
-        document.getElementById('sidebarContainer').innerHTML = renderSidebar('staff', 'products');
-        loadCategoryOptions();
-        renderProducts();
+        let qal = localStorage.getItem("id_current_user");
+        let qal1 =  await getUserById(qal);
+        document.getElementById('sidebarContainer').innerHTML = renderSidebar(qal1.role, 'products');
+        await loadCategoryOptions();
+        await renderProducts();
     })();
 
-    function loadCategoryOptions() {
-        const cats = getCategories();
-        document.getElementById('fCategory').innerHTML = cats.map(c =>
-            `<option value="${c.id}">${c.icon} ${c.name}</option>`
-        ).join('');
+    // ========== LOAD CATEGORIES ==========
+    async function loadCategoryOptions() {
+        try {
+            await preloadData();
+            const cats = getCategories();
+            document.getElementById('fCategory').innerHTML = cats.map(c =>
+                `<option value="${c.id}">${c.icon} ${c.name}</option>`
+            ).join('');
+        } catch (e) {
+            console.error('Error loading categories:', e);
+            showToast('Lỗi tải danh mục!', 'error');
+        }
     }
 
-    function renderProducts() {
-        const keyword = document.getElementById('searchInput').value.toLowerCase();
-        let products = getProducts();
-        if (keyword) {
-            products = products.filter(p =>
-                p.name.toLowerCase().includes(keyword) ||
-                p.origin.toLowerCase().includes(keyword) ||
-                p.description.toLowerCase().includes(keyword)
-            );
+    // ========== FETCH PRODUCTS FROM API ==========
+    async function fetchProductsFromAPI() {
+        try {
+            const response = await fetch(API_STAFF_PRODUCTS);
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            const data = await response.json();
+            _productsDataCache = data || [];
+            return _productsDataCache;
+        } catch (error) {
+            console.error('API Error:', error);
+            showToast('Lỗi tải danh sách sản phẩm từ server!', 'error');
+            return [];
         }
-        const categories = getCategories();
-        document.getElementById('productTableBody').innerHTML = products.length
-            ? products.map(p => {
-                const cat = categories.find(c => c.id === p.category_id);
+    }
+    function formatText(text) {
+        if (!text) return '';
+        return text.length > 15 ? text.slice(0, 15) + '...' : text;
+    }
+    // ========== RENDER PRODUCTS TABLE ==========
+    async function renderProducts() {
+        try {
+            const products = await fetchProductsFromAPI();
+            const keyword = document.getElementById('searchInput').value.toLowerCase();
+            
+            let filteredProducts = products;
+            if (keyword) {
+                filteredProducts = products.filter(p =>
+                    p.name.toLowerCase().includes(keyword) ||
+                    (p.origin && p.origin.toLowerCase().includes(keyword)) ||
+                    (p.description && p.description.toLowerCase().includes(keyword))
+                );
+            }
+
+            const tableBody = document.getElementById('productTableBody');
+            if (!filteredProducts.length) {
+                tableBody.innerHTML = '<tr><td colspan="11" class="text-center text-muted" style="padding:40px">Không tìm thấy sản phẩm</td></tr>';
+                return;
+            }
+
+            tableBody.innerHTML = filteredProducts.map(p => {
+                const primaryImage = p.list_image_url && p.list_image_url.find(img => img.is_primary);
+                console.log(primaryImage);
+                const imageDisplay = primaryImage ? `<img src="https://localhost:7128${primaryImage.image_url}" alt="Not Valid" style="width:60px;height:60px;object-fit:cover;border-radius:4px;">` : '<span style="color:#999;">Chưa có ảnh</span>';
+                
                 return `<tr>
-                    <td><strong>${p.id}</strong></td>
-                    <td style="font-size:1.5rem;">${p.emoji || '🥬'}</td>
-                    <td><strong>${p.name}</strong></td>
-                    <td>${cat ? cat.name : ''}</td>
+                    <td style="padding-left: 16px;"><strong>${p.id}</strong></td>
+                    <td>${imageDisplay}</td>
+                    <td><strong>${formatText(p.name)}</strong></td>
+                    <td category-id="${p.category_id}">${formatText(p.category_name)}</td>
+                    <td>${formatText(p.unit)}</td>
+                    <td>${formatText(p.origin)}</td>
+                    <td>${formatText(p.food_type)}</td>
                     <td class="text-accent fw-bold">${formatPrice(p.price)}</td>
+                    <td>${p.hsd ? formatDate(p.hsd) : 'N/A'}</td>
                     <td>${p.quantity}</td>
-                    <td>${p.origin}</td>
                     <td>
                         <div class="table-actions">
-                            <button class="btn-edit" onclick="editProduct(${p.id})" title="Sửa">✏️</button>
-                            <button class="btn-delete" onclick="deleteProduct(${p.id})" title="Xóa">🗑️</button>
+                            <button class="btn-edit" onclick="editProduct(${p.id})" title="Sửa"><i class="fa-solid fa-pen-to-square"></i></button>
+                            <button class="btn-delete" onclick="deleteProduct(${p.id})" title="Xóa"><i class="fa-solid fa-trash"></i></button>
                         </div>
                     </td>
                 </tr>`;
-            }).join('')
-            : '<tr><td colspan="8" class="text-center text-muted" style="padding:40px">Không tìm thấy sản phẩm</td></tr>';
+            }).join('');
+        } catch (error) {
+            console.error('Render error:', error);
+            showToast('Lỗi hiển thị sản phẩm!', 'error');
+        }
     }
 
+    // ========== OPEN ADD PRODUCT MODAL ==========
     function openAddProduct() {
         document.getElementById('modalTitle').textContent = 'Thêm sản phẩm mới';
         document.getElementById('editId').value = '';
-        clearForm();
+        _currentProductImages = [];
+        // clearForm();
         openModal('productModal');
     }
 
+    // ========== EDIT PRODUCT ==========
     function editProduct(id) {
-        const p = getProductById(id);
-        if (!p) return;
+        const product = _productsDataCache.find(p => p.id === parseInt(id));
+        if (!product) {
+            showToast('Không tìm thấy sản phẩm!', 'error');
+            return;
+        }
+        console.log(product);
         document.getElementById('modalTitle').textContent = 'Sửa sản phẩm';
-        document.getElementById('editId').value = p.id;
-        document.getElementById('fName').value = p.name;
-        document.getElementById('fDesc').value = p.description;
-        document.getElementById('fPrice').value = p.price;
-        document.getElementById('fUnit').value = p.unit;
-        document.getElementById('fCategory').value = p.category_id;
-        document.getElementById('fOrigin').value = p.origin;
-        document.getElementById('fFoodType').value = p.food_type;
-        document.getElementById('fQuantity').value = p.quantity;
-        document.getElementById('fSize').value = p.size;
-        document.getElementById('fUsage').value = p.usage_instructions;
-        document.getElementById('fStorage').value = p.storage_instructions;
-        document.getElementById('fEmoji').value = p.emoji;
-        document.getElementById('fBadge').value = p.badge || '';
+        document.getElementById('editId').value = product.id;
+        
+        // Fill form fields
+        document.getElementById('fName').value = product.name || '';
+        document.getElementById('fDesc').value = product.description || '';
+        document.getElementById('fPrice').value = product.price || 0;
+        document.getElementById('fUnit').value = product.unit || 'kg';
+        // document.getElementById('fCategory').textContent = product.category_name || '';
+        document.getElementById('fCategory').value = product.category_id || '';
+
+        document.getElementById('fOrigin').value = product.origin || '';
+        document.getElementById('fFoodType').value = product.food_type || 'Sạch';
+        document.getElementById('fQuantity').value = product.quantity || 0;
+        document.getElementById('fSize').value = product.size || '';
+        document.getElementById('fUsage').value = product.usage_instructions || '';
+        document.getElementById('fStorage').value = product.storage_instructions || '';
+        if (document.getElementById('fHSD')) {
+            if (product.hsd) {
+                // Chuyển từ MM/dd/YYYY về yyyy-MM-dd cho input type=date
+                const parts = product.hsd.slice(0, 10).split('-');
+                console.log(parts);
+                if (parts.length == 3) {
+                    const yyyy = parts[0];
+                    const mm = parts[1].padStart(2, '0');
+                    const dd = parts[2].padStart(2, '0');
+                    document.getElementById('fHSD').value = `${yyyy}-${mm}-${dd}`;
+                } else {
+                    document.getElementById('fHSD').value = '';
+                }
+            } else {
+                document.getElementById('fHSD').value = '';
+            }
+        }
+        _currentProductImages = product.list_image_url ? [...product.list_image_url] : [];
+        renderProductImages();
+        
         openModal('productModal');
     }
 
-    function saveProduct() {
+    // ========== SAVE PRODUCT ==========
+    async function saveProduct() {
+        const id = document.getElementById('editId').value;
         const name = document.getElementById('fName').value.trim();
         const price = parseInt(document.getElementById('fPrice').value);
         const quantity = parseInt(document.getElementById('fQuantity').value);
+        let hsd = '';
+        const hsdInput = document.getElementById('fHSD');
+        if (hsdInput && hsdInput.value) {
+            const date = new Date(hsdInput.value);
+            if (!isNaN(date.getTime())) {
+                const mm = String(date.getMonth() + 1).padStart(2, '0');
+                const dd = String(date.getDate()).padStart(2, '0');
+                const yyyy = date.getFullYear();
+                hsd = `${mm}/${dd}/${yyyy}`;
+            }
+        };
 
+        // Validation
         if (!name) { showToast('Vui lòng nhập tên sản phẩm!', 'error'); return; }
         if (!price || price <= 0) { showToast('Vui lòng nhập giá hợp lệ!', 'error'); return; }
         if (isNaN(quantity) || quantity < 0) { showToast('Số lượng không hợp lệ!', 'error'); return; }
 
-        const products = getProducts();
-        const editId = document.getElementById('editId').value;
-
+        // Lấy dữ liệu chung
         const productData = {
             name: name,
             description: document.getElementById('fDesc').value.trim(),
@@ -257,49 +343,293 @@
             size: document.getElementById('fSize').value.trim(),
             usage_instructions: document.getElementById('fUsage').value.trim(),
             storage_instructions: document.getElementById('fStorage').value.trim(),
-            emoji: document.getElementById('fEmoji').value,
-            badge: document.getElementById('fBadge').value
+            hsd: hsd
         };
 
-        if (editId) {
-            const idx = products.findIndex(p => p.id === parseInt(editId));
-            if (idx !== -1) {
-                products[idx] = { ...products[idx], ...productData };
-                setProducts(products);
-                showToast('Cập nhật sản phẩm thành công!');
+        if (id) {
+            // ================= UPDATE PRODUCT (PUT) =================
+            const formData = new FormData();
+            formData.append('id', parseInt(id));
+            
+            // Thêm tất cả fields từ productData
+            for (const key in productData) {
+                formData.append(key, productData[key]);
+            }
+
+            // ===== Xử lý ảnh chính =====
+            const mainImg = _currentProductImages.find(img => img.is_primary);
+            if (mainImg && mainImg.image_url.startsWith('data:')) {
+                const file = dataURLtoFile(mainImg.image_url, 'primary_img.png');
+                formData.append('primary_img_file', file);
+            }
+
+            // ===== Xử lý ảnh phụ =====
+            const secondaryImgs = _currentProductImages.filter(img => !img.is_primary);
+            const newSecondaryImgs = secondaryImgs.filter(img => img.image_url.startsWith('data:'));
+            
+            newSecondaryImgs.forEach((img) => {
+                const file = dataURLtoFile(img.image_url, `pi_${Date.now()}.png`);
+                formData.append('images', file);
+            });
+            
+            try {
+                const response = await fetch(`https://localhost:7128/api/SanPham/UpdateDetailProduct?id=${id}`, {
+                    method: 'PUT',
+                    body: formData
+                });
+                if (!response.ok) {
+                    const err = await response.text();
+                    showToast('Lỗi cập nhật sản phẩm! ' + err, 'error');
+                    return;
+                }
+                const result = await response.json();
+                console.log(result);
+                if(result.productId > 0) {
+                    showToast(result.message, 'success');
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1000);
+                }
+                else{
+                    showToast(result.message, 'error');
+                    return;
+                }
+            } catch (e) {
+                showToast('Lỗi kết nối server!', 'error');
+                console.error(e);
             }
         } else {
-            const maxId = products.length ? Math.max(...products.map(p => p.id)) : 0;
-            const hsd = new Date();
-            hsd.setDate(hsd.getDate() + 14);
-            productData.id = maxId + 1;
-            productData.hsd = hsd.toISOString().split('T')[0];
-            products.push(productData);
-            setProducts(products);
-            showToast('Thêm sản phẩm mới thành công!');
+            // ================= ADD PRODUCT (POST) =================
+            const formData = new FormData();
+            for (const key in productData) {
+                formData.append(key, productData[key]);
+            }
+            console.log(_currentProductImages);
+            // Ảnh chính
+            const mainImg = _currentProductImages.find(img => img.is_primary);
+            if (mainImg && mainImg.image_url && mainImg.image_url.startsWith('data:')) {
+                const file = dataURLtoFile(mainImg.image_url, 'primary_img.png');
+                formData.append('primary_img_file', file);
+            }
+
+            // Ảnh phụ
+            const secondaryImgs = _currentProductImages.filter(img => !img.is_primary);
+            secondaryImgs.forEach((img) => {
+                if (img.image_url && img.image_url.startsWith('data:')) {
+                    const file = dataURLtoFile(img.image_url, `pi_${Date.now()}.png`);
+                    formData.append('images', file);
+                }
+            });
+            console.log([...formData.entries()]);
+
+            try {
+                const response = await fetch('https://localhost:7128/api/SanPham/Add_new_Detail_Product', {
+                    method: 'POST',
+                    body: formData
+                });
+                if (response.ok) {
+                    showToast('Thêm sản phẩm thành công!', 'success');
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1000);
+                }
+                else{
+                    const err = await response.text();
+                    showToast('Lỗi thêm sản phẩm! ' + err, 'error');
+                    return;
+                }
+            } catch (e) {
+                showToast('Lỗi kết nối server!', 'error');
+                console.error(e);
+            }
         }
 
         closeModal('productModal');
-        renderProducts();
     }
 
-    function deleteProduct(id) {
-        const p = getProductById(id);
-        if (!p) return;
-        if (!confirm(`Bạn có chắc muốn xóa sản phẩm "${p.name}"?`)) return;
-        const products = getProducts().filter(prod => prod.id !== id);
-        setProducts(products);
-        showToast('Đã xóa sản phẩm!', 'info');
-        renderProducts();
+    // Helper: Convert base64 to File
+    function dataURLtoFile(dataurl, filename) {
+        const arr = dataurl.split(','), mime = arr[0].match(/:(.*?);/)[1], bstr = atob(arr[1]);
+        let n = bstr.length, u8arr = new Uint8Array(n);
+        while(n--){
+            u8arr[n] = bstr.charCodeAt(n);
+        }
+        return new File([u8arr], filename, {type:mime});
     }
 
+    // ========== DELETE PRODUCT ==========
+    async function deleteProduct(id) {
+        const product = await getProducts().then(products => products.find(p => p.id === parseInt(id)));
+        if (!product) {
+            showToast('Không tìm thấy sản phẩm!', 'error');
+            return;
+        }
+        if (!confirm(`Bạn có chắc muốn xóa sản phẩm "${product.name}"?`)) return;
+
+        try {
+            let query = `https://localhost:7128/api/SanPham/DeleteProductbyID?id=${id}`;
+            const response = await fetch(query, {
+                method: 'DELETE'
+            });
+            if (!response.ok) {
+                throw new Error('Failed to delete product');
+            }
+            showToast('Đã xóa sản phẩm!', 'success');
+            setTimeout(() => {
+                window.location.reload();
+            }, 400);
+        } catch (error) {
+            console.error('Delete error:', error);
+            showToast('Lỗi xóa sản phẩm!', 'error');
+        }
+    }
+
+    // ========== CLEAR FORM ==========
     function clearForm() {
         ['fName', 'fDesc', 'fPrice', 'fUnit', 'fOrigin', 'fQuantity', 'fSize', 'fUsage', 'fStorage'].forEach(id => {
             document.getElementById(id).value = '';
         });
         document.getElementById('fFoodType').value = 'Sạch';
-        document.getElementById('fEmoji').value = '<i class="fa-solid fa-seedling"></i>';
         document.getElementById('fBadge').value = '';
+        _currentProductImages = [];
+        renderProductImages();
+    }
+
+    // ========== RENDER PRODUCT IMAGES ==========
+    function renderProductImages() {
+        // Render main image (is_primary=true)
+        const mainImg = _currentProductImages.find(img => img.is_primary);
+        const mainImgTag = document.getElementById('mainProductImage');
+        if (mainImgTag) {
+            mainImgTag.src = mainImg ? mainImg.image_url : '';
+        }
+
+        // Render secondary images (is_primary=false)
+        const container = document.getElementById('productImagesContainer');
+        const secondaryImages = _currentProductImages.filter(img => !img.is_primary);
+        if (!secondaryImages.length) {
+            container.innerHTML = '<p style="grid-column: 1/-1; color: #999; font-size: 12px;">Chưa có ảnh phụ</p>';
+            return;
+        }
+        container.innerHTML = secondaryImages.map((img, idx) => {
+            // idx here is index in secondaryImages, need to map to index in _currentProductImages
+            const realIdx = _currentProductImages.findIndex(i => i === img);
+            return `
+            <div style="position: relative; border-radius: 4px; overflow: hidden; background: #f5f5f5;">
+                <img src="${img.image_url}" alt="product-${realIdx}" style="width: 100%; height: 80px; object-fit: cover;">
+                <div style="position: absolute; top: 0; right: 0; display: flex; gap: 2px; background: rgba(0,0,0,0.6); padding: 2px;">
+                    <button type="button" class="btn btn-sm" onclick="deleteProductImage(${realIdx})" title="Xóa" style="font-size: 10px; padding: 2px 4px; background: #f44336; border: none; color: white; cursor: pointer;">×</button>
+                </div>
+            </div>
+            `;
+        }).join('');
+    }
+
+    // ========== UPLOAD PRODUCT IMAGE (Secondary) ========== 
+    function uploadProductImage() {
+        const fileInput = document.getElementById('uploadImageInput');
+        if (!fileInput.files.length) {
+            showToast('Vui lòng chọn ảnh!', 'error');
+            return;
+        }
+
+        const file = fileInput.files[0];
+        // Validate file type
+        if (!file.type.startsWith('image/')) {
+            showToast('Vui lòng chọn file ảnh!', 'error');
+            return;
+        }
+        // Validate file size (max 5MB)
+        if (file.size > 5 * 1024 * 1024) {
+            showToast('Ảnh không được vượt quá 5MB!', 'error');
+            return;
+        }
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const imageUrl = e.target.result;
+            // Add as secondary image
+            const newImage = {
+                idimg: Date.now(),
+                image_url: imageUrl,
+                is_primary: false,
+                product_id: parseInt(document.getElementById('editId').value) || 0
+            };
+            _currentProductImages.push(newImage);
+            renderProductImages();
+            fileInput.value = '';
+            showToast('Tải ảnh phụ lên thành công!');
+        };
+        reader.readAsDataURL(file);
+    }
+
+    // ========== CHANGE MAIN PRODUCT IMAGE ========== 
+    function changeMainProductImage(event) {
+        const fileInput = event.target;
+        console.log(fileInput.files[0]);
+        if (!fileInput.files.length) {
+            showToast('Vui lòng chọn ảnh!', 'error');
+            return;
+        }
+        const file = fileInput.files[0];
+        if (!file.type.startsWith('image/')) {
+            showToast('Vui lòng chọn file ảnh!', 'error');
+            return;
+        }
+        if (file.size > 5 * 1024 * 1024) {
+            showToast('Ảnh không được vượt quá 5MB!', 'error');
+            return;
+        }
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const imageUrl = e.target.result;
+            // Nếu đã có ảnh chính thì cập nhật, chưa có thì thêm mới
+            let mainIdx = _currentProductImages.findIndex(img => img.is_primary);
+            if (mainIdx !== -1) {
+                console.log("Vào đây");
+                _currentProductImages[mainIdx].image_url = imageUrl;
+                console.log(_currentProductImages[mainIdx]);
+            } else {
+                _currentProductImages.unshift({
+                    idimg: Date.now(),
+                    image_url: imageUrl,
+                    is_primary: true,
+                    product_id: parseInt(document.getElementById('editId').value) || 0
+                });
+            }
+            renderProductImages();
+            fileInput.value = '';
+            showToast('Đã cập nhật ảnh chính!');
+        };
+        reader.readAsDataURL(file);
+    }
+
+    // ========== SET IMAGE AS PRIMARY ==========
+    function setImagePrimary(index) {
+        if (index < 0 || index >= _currentProductImages.length) return;
+        
+        // Set all to not primary
+        _currentProductImages.forEach(img => img.is_primary = false);
+        // Set selected to primary
+        _currentProductImages[index].is_primary = true;
+        
+        renderProductImages();
+        showToast('Đã cập nhật ảnh chính!');
+    }
+
+    // ========== DELETE PRODUCT IMAGE ==========
+    function deleteProductImage(index) {
+        if (index < 0 || index >= _currentProductImages.length) return;
+        if (!confirm('Bạn có chắc muốn xóa ảnh này?')) return;
+        
+        const wasRemoved = _currentProductImages.splice(index, 1);
+        
+        // If deleted image was primary, set first remaining as primary
+        if (wasRemoved[0]?.is_primary && _currentProductImages.length > 0) {
+            _currentProductImages[0].is_primary = true;
+        }
+        
+        renderProductImages();
+        showToast('Đã xóa ảnh!', 'info');
     }
     </script>
 </body>

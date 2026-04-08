@@ -12,7 +12,7 @@
         <div id="sidebarContainer"></div>
         <div class="main-content">
             <div class="topbar">
-                <h2><i class="fa-solid fa-users"></i> Quản lý người dùng</h2>
+                <h2><span style="color: #6a1b9a; background-color: #f3e5f5; padding: 6px 10px; border-radius: 6px; display: inline-flex; align-items: center; margin-right: 8px;"><i class="fa-solid fa-users"></i></span> Quản lý người dùng</h2>
                 <div class="topbar-actions">
                     <button class="btn btn-primary btn-sm" onclick="openAddUser()"><i class="fa-solid fa-plus"></i> Thêm người dùng</button>
                 </div>
@@ -79,10 +79,14 @@
     <script src="../js/app.js"></script>
     <script>
     const currentUser = requireRole(['staff', 'admin']);
-    if (currentUser) {
-        document.getElementById('sidebarContainer').innerHTML = renderSidebar('staff', 'users');
-        renderUsers();
-    }
+    (async function initPage() {
+        if (currentUser) {
+            let qal = localStorage.getItem("id_current_user");
+            let qal1 =  await getUserById(qal);
+            document.getElementById('sidebarContainer').innerHTML = renderSidebar(qal1.role, 'users');
+            renderUsers();
+        }
+    })();
 
     function getRoleLabel(role) {
         const map = { admin: 'Quản trị viên', staff: 'Nhân viên', user: 'Khách hàng' };
@@ -98,15 +102,15 @@
         return styles[role] || '';
     }
 
-    function getManageableUsers() {
-        const users = getUsers();
+    async function getManageableUsers() {
+        const users = await getUsers();
         if (currentUser.role === 'admin') return users;
         return users.filter(u => u.role !== 'admin');
     }
 
-    function renderUsers() {
+    async function renderUsers() {
         const keyword = document.getElementById('searchInput').value.toLowerCase();
-        let users = getManageableUsers();
+        let users = await getManageableUsers();
         if (keyword) {
             users = users.filter(u =>
                 u.name.toLowerCase().includes(keyword) ||
@@ -131,7 +135,7 @@
                     <td>
                         ${canEdit ? `<div class="table-actions">
                             <button class="btn-edit" onclick="editUser(${u.id})" title="Sửa"><i class="fa-solid fa-pen"></i></button>
-                            ${u.id !== currentUser.id ? `<button class="btn-delete" onclick="deleteUser(${u.id})" title="Xóa"><i class="fa-solid fa-trash"></i></button>` : ''}
+                            ${u.id !== currentUser.id ? `<button class="btn-delete" onclick="apiDeleteUser(${u.id})" title="Xóa"><i class="fa-solid fa-trash"></i></button>` : ''}
                         </div>` : '<span style="font-size:0.82rem;color:var(--text-light);">—</span>'}
                     </td>
                 </tr>`;
@@ -169,25 +173,67 @@
     }
 
     function editUser(id) {
-        const u = getUserById(id);
-        if (!u) return;
-        if (currentUser.role !== 'admin' && u.role === 'admin') {
+        if(id == 1) {
+            showToast('Không thể chỉnh sửa tài khoản admin tổng của hệ thống!', 'error');
+            return;
+        }
+        // Nếu gọi từ onclick="editUser(id)", lấy tr từ btn-edit
+        let tr = null;
+        // Tìm phần tử đang active (btn-edit) qua event hoặc fallback theo id
+        if (window.event && window.event.target) {
+            let btn = window.event.target;
+            // Nếu click vào icon bên trong button
+            if (btn.tagName === 'I' && btn.parentElement.classList.contains('btn-edit')) {
+                btn = btn.parentElement;
+            }
+            if (btn.classList.contains('btn-edit')) {
+                tr = btn.closest('tr');
+            }
+        }
+        // Nếu không tìm được tr, fallback lấy theo id (cũ)
+        let values = {};
+        if (tr) {
+            // Lấy các cột theo thứ tự: ID, Họ tên, Email, Vai trò, Ngày tạo
+            const tds = tr.querySelectorAll('td');
+            values.id = tds[0].innerText.trim();
+            // Họ tên nằm trong strong ở td[1]
+            values.name = tds[1].querySelector('strong').innerText.trim();
+            values.email = tds[2].innerText.trim();
+            // Vai trò lấy value từ text trong span
+            const roleText = tds[3].querySelector('span').innerText.trim();
+            // Map lại roleText về value
+            const roleMap = { 'Quản trị viên': 'admin', 'Nhân viên': 'staff', 'Khách hàng': 'user' };
+            values.role = roleMap[roleText] || 'user';
+            values.created_at = tds[4].innerText.trim();
+        } else {
+            // Fallback: lấy từ getUserById như cũ
+            const u = getUserById(id);
+            if (!u) return;
+            if (currentUser.role !== 'admin' && u.role === 'admin') {
+                showToast('Bạn không có quyền chỉnh sửa tài khoản admin!', 'error');
+                return;
+            }
+            values = { id: u.id, name: u.name, email: u.email, role: u.role, created_at: u.created_at };
+        }
+        // Check quyền
+        if (currentUser.role !== 'admin' && values.role === 'admin') {
             showToast('Bạn không có quyền chỉnh sửa tài khoản admin!', 'error');
             return;
         }
+        // Fill form
         document.getElementById('modalTitle').textContent = 'Sửa người dùng';
-        document.getElementById('editId').value = u.id;
-        document.getElementById('fName').value = u.name;
-        document.getElementById('fEmail').value = u.email;
+        document.getElementById('editId').value = values.id;
+        document.getElementById('fName').value = values.name;
+        document.getElementById('fEmail').value = values.email;
         document.getElementById('fPassword').value = '';
         document.getElementById('fPassword').removeAttribute('required');
         document.getElementById('passwordGroup').querySelector('label').textContent = 'Mật khẩu (để trống nếu không đổi)';
         loadRoleOptions(true);
-        document.getElementById('fRole').value = u.role;
+        document.getElementById('fRole').value = values.role;
         openModal('userModal');
     }
 
-    function saveUser() {
+    async function saveUser() {
         const name = document.getElementById('fName').value.trim();
         const email = document.getElementById('fEmail').value.trim();
         const password = document.getElementById('fPassword').value;
@@ -198,7 +244,7 @@
         if (!email) { showToast('Vui lòng nhập email!', 'error'); return; }
         if (!editId && !password) { showToast('Vui lòng nhập mật khẩu!', 'error'); return; }
 
-        const users = getUsers();
+        const users = await getUsers();
 
         const duplicate = users.find(u => u.email === email && String(u.id) !== editId);
         if (duplicate) { showToast('Email đã tồn tại!', 'error'); return; }
@@ -210,7 +256,7 @@
                 users[idx].email = email;
                 users[idx].role = role;
                 if (password) users[idx].password = password;
-                setUsers(users);
+                await apiUpdateUser(users[idx].id, users[idx]);
                 showToast('Cập nhật người dùng thành công!');
             }
         } else {
@@ -223,7 +269,7 @@
                 role: role,
                 created_at: new Date().toISOString().split('T')[0]
             });
-            setUsers(users);
+            await apiAddUser(users[users.length - 1]);
             showToast('Thêm người dùng mới thành công!');
         }
 
@@ -231,23 +277,56 @@
         document.getElementById('passwordGroup').querySelector('label').textContent = 'Mật khẩu';
         renderUsers();
     }
-
-    function deleteUser(id) {
-        const u = getUserById(id);
-        if (!u) return;
-        if (u.id === currentUser.id) {
+    async function apiAddUser(user) {
+        const res = await fetch('https://localhost:7128/api/Users/Users/Addnew', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(user)
+        });
+        if (!res.ok) throw new Error(await res.text());
+        return await res.text();
+    }
+    async function apiUpdateUser(id, user) {
+        console.log(JSON.stringify(user));
+        const res = await fetch(`https://localhost:7128/api/Users/Users/UpdateUser?id=${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(user)
+        });
+        if (!res.ok) throw new Error(await res.text());
+        return await res.text();
+    }
+    async function apiDeleteUser(id) {
+        let user_dlt = await getUserById(id);
+        if(getCurrentUser().id === id) {
             showToast('Không thể xóa chính mình!', 'error');
             return;
         }
-        if (currentUser.role !== 'admin' && u.role === 'admin') {
+        if (getCurrentUser().role !== 'admin' && user_dlt.role === 'admin') {
             showToast('Bạn không có quyền xóa tài khoản admin!', 'error');
             return;
         }
-        if (!confirm(`Bạn có chắc muốn xóa người dùng "${u.name}"?`)) return;
-        const users = getUsers().filter(usr => usr.id !== id);
-        setUsers(users);
-        showToast('Đã xóa người dùng!', 'info');
-        renderUsers();
+        if (!confirm(`Bạn có chắc muốn xóa người dùng "${user_dlt.name}"?`)) return;
+
+        const res = await fetch(`https://localhost:7128/api/Users/Users/DeleteUser?id=${id}`, {
+            method: 'DELETE'
+        });
+        if (!res.ok) throw new Error(await res.text());
+        showToast('Đã xóa người dùng!', 'success');
+
+        const tableBody = document.getElementById('userTableBody');
+        if (tableBody) {
+            const trs = tableBody.querySelectorAll('tr');
+            for (const tr of trs) {
+                const td = tr.querySelector('td');
+                if (td && td.textContent.trim() === String(id)) {
+                    tr.remove();
+                    break;
+                }
+            }
+        }
+
+        return await res.json();
     }
     </script>
 </body>

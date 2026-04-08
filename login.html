@@ -116,10 +116,12 @@
             const user = await loginAPI(email, password);
             setCurrentUser(user);
             showToast(`Chào mừng ${user.name}! Đang chuyển hướng...`, 'success');
+            localStorage.setItem('current_user', JSON.stringify(user));
+            localStorage.setItem('id_current_user', JSON.stringify(user.id));
 
             setTimeout(() => {
                 switch (user.role) {
-                    case 'admin': window.location.href = 'admin/dashboard.html'; break;
+                    case 'admin': window.location.href = 'staff/dashboard.html'; break;
                     case 'staff': window.location.href = 'staff/dashboard.html'; break;
                     default:      window.location.href = 'index.html'; break;
                 }
@@ -201,8 +203,8 @@
 
     /* ── Redirect if already logged in ── */
     (function checkAlreadyLoggedIn() {
-        const user = getCurrentUser();
-        if (user) {
+        const user = JSON.parse(localStorage.getItem('current_user') || 'null');
+        if (user && user !== 'null') {
             switch (user.role) {
                 case 'admin': window.location.href = 'admin/dashboard.html'; break;
                 case 'staff': window.location.href = 'staff/dashboard.html'; break;

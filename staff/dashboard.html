@@ -13,7 +13,7 @@
         <div id="sidebarContainer"></div>
         <div class="main-content">
             <div class="topbar">
-                <h2>📊 Dashboard</h2>
+                <h2><span style="color: #f57c00; background-color: #bbfcf8; padding: 6px 10px; border-radius: 6px; display: inline-flex; align-items: center; margin-right: 8px;">📊</span> Dashboard</h2>
                 <div class="topbar-actions">
                     <span id="userGreeting"></span>
                 </div>
@@ -57,13 +57,14 @@
         const user = requireRole(['staff', 'admin']);
         if (!user) return;
         await preloadData();
-
-        document.getElementById('sidebarContainer').innerHTML = renderSidebar('staff', 'dashboard');
+        let qal = localStorage.getItem("id_current_user");
+        let qal1 =  await getUserById(qal);
+        document.getElementById('sidebarContainer').innerHTML = renderSidebar(qal1.role, 'dashboard');
         document.getElementById('userGreeting').innerHTML = `👋 Xin chào, <strong>${user.name}</strong>`;
 
-        const products = getProducts();
-        const orders = getOrders();
-        const users = getUsers();
+        const products = await _fetchProductsFromAPI();
+        const orders = await getOrders();
+        const users = await getUsers();
         const totalRevenue = orders
             .filter(o => o.order_status === 'resolve')
             .reduce((sum, o) => sum + o.total_amount, 0);
@@ -102,42 +103,45 @@
         const recentOrders = [...orders].sort((a, b) => new Date(b.order_date) - new Date(a.order_date)).slice(0, 5);
         document.getElementById('recentOrders').innerHTML = recentOrders.length
             ? recentOrders.map(o => {
-                const customer = getUserById(o.user_id);
                 return `<tr>
                     <td><strong>#${o.id}</strong></td>
-                    <td>${customer ? customer.name : 'N/A'}</td>
+                    <td>${o.recipient_name}</td>
                     <td class="text-accent fw-bold">${formatPrice(o.total_amount)}</td>
                     <td><span class="order-status status-${o.order_status}">${getOrderStatusText(o.order_status)}</span></td>
                 </tr>`;
             }).join('')
             : '<tr><td colspan="4" class="text-center text-muted" style="padding:30px">Chưa có đơn hàng</td></tr>';
 
-        const productSales = {};
-        orders.forEach(o => {
-            o.items.forEach(item => {
-                productSales[item.product_id] = (productSales[item.product_id] || 0) + item.quantity;
-            });
-        });
-        const topProducts = Object.entries(productSales)
-            .sort((a, b) => b[1] - a[1])
-            .slice(0, 5);
-
-        document.getElementById('topProducts').innerHTML = topProducts.length
-            ? topProducts.map((entry, idx) => {
-                const p = getProductById(parseInt(entry[0]));
-                if (!p) return '';
+        // Lấy danh sách sản phẩm bán chạy từ API (Server đã tính toán)
+        const topProducts = await GetListProductSellWell();
+        
+        if (topProducts.length > 0) {
+            const productHtmlArr = topProducts.map((product, idx) => {
                 return `<div style="display:flex;align-items:center;gap:14px;padding:12px 0;${idx < topProducts.length - 1 ? 'border-bottom:1px dashed var(--border);' : ''}">
-                    <div style="width:44px;height:44px;background:var(--primary-bg);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.5rem;">${p.emoji}</div>
+                    <img style="width:44px;height:44px;background:var(--primary-bg);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.5rem;" src="https://localhost:7128${product.image_url}" alt="${product.name}">
                     <div style="flex:1;">
-                        <div style="font-weight:600;">${p.name}</div>
-                        <div style="font-size:0.82rem;color:var(--text-light);">Đã bán: ${entry[1]} ${p.unit}</div>
+                        <div style="font-weight:600;">${product.name}</div>
                     </div>
-                    <div style="font-weight:700;color:var(--accent);">${formatPrice(p.price)}</div>
                 </div>`;
-            }).join('')
-            : '<div class="empty-state"><div class="empty-icon"><i class="fa-solid fa-chart-bar"></i></div><p>Chưa có dữ liệu bán hàng</p></div>';
+            });
+            document.getElementById('topProducts').innerHTML = productHtmlArr.join('');
+        } else {
+            document.getElementById('topProducts').innerHTML = '<div class="empty-state"><div class="empty-icon"><i class="fa-solid fa-chart-bar"></i></div><p>Chưa có dữ liệu bán hàng</p></div>';
+        }
     })();
-
+    async function GetListProductSellWell(){
+        const api = `https://localhost:7128/api/SanPham/Render_Product_sellwell_Dashbroads`;
+        let list1 = await fetch(api);
+        if(!list1.ok){
+            showToast('Không thể tải dữ liệu sản phẩm bán chạy!', 'error');
+            return [];
+        }
+        let list2 = await list1.json();
+        if(list2.length > 0){
+            return list2;
+        }
+        return [];
+    }
     document.querySelector(".top-products-selling h3").innerHTML = `🏆 Sản phẩm bán chạy trong tháng ${new Date().getMonth() + 1}`;
     </script>
 </body>
